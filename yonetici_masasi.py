@@ -28,6 +28,32 @@ import sirket_motoru
 from langchain_core.messages import HumanMessage, AIMessage
 from model_factory import API_KEY_POOL, TARGET_MODEL, get_gemini_llm
 
+from meta_katman.meta_motoru import (
+    chat_with_cofounder,
+    chat_with_skeptic,
+    run_boardroom_council_debate,
+    save_session_as_brainstorm,
+    save_session_as_adr
+)
+from meta_katman.ikinci_beyin import (
+    get_company_vision,
+    update_company_vision,
+    list_vault_documents,
+    read_document_content
+)
+from meta_katman.direktif_koprusu import bridge_meta_to_operational_directive
+from meta_katman.kod_araclari import (
+    WorkspaceSecurity,
+    CodeSnapshotManager,
+    CodeQualityEngine,
+    CodeInspector
+)
+from meta_katman.otonom_kodlayici import (
+    plan_and_generate_code_patch,
+    execute_approved_code_patch,
+    rollback_code_change
+)
+
 # ==============================================================================
 # 1. Sayfa Yapılandırması ve Kurumsal Tasarım (Executive Theme)
 # ==============================================================================
@@ -206,6 +232,18 @@ if "current_deliverables" not in st.session_state:
         "ceo_closing": None
     }
 
+if "meta_chat_history" not in st.session_state:
+    st.session_state.meta_chat_history = []
+
+if "meta_pending_directive" not in st.session_state:
+    st.session_state.meta_pending_directive = None
+
+if "swe_active_patch" not in st.session_state:
+    st.session_state.swe_active_patch = None
+
+if "swe_last_backup" not in st.session_state:
+    st.session_state.swe_last_backup = None
+
 # ==============================================================================
 # 4. Yan Menü (Sidebar) - Şirket Paneli & Ajan Radarı
 # ==============================================================================
@@ -213,8 +251,14 @@ with st.sidebar:
     st.markdown("### 🏢 OTONOM AJAN HOLDİNG")
     st.caption("Executive Management Cockpit v3.0")
     
-    # Harici Kapsamlı Dökümantasyon Bağlantısı
-    st.page_link("pages/1_📖_Sistem_Dokumantasyonu.py", label="📖 Sistem Dökümantasyonu & Whitepaper", icon="📚")
+    # Birebir aynı zengin formatta ayrı web-browser sekmesinde dökümantasyonu açma butonu
+    st.link_button(
+        "📖 Dökümantasyonu Ayrı Sekmede Aç ↗",
+        url="/Sistem_Dokumantasyonu",
+        type="primary",
+        use_container_width=True,
+        help="Sistem mimarisini, kod katmanlarını ve hızlı kullanım rehberini ayrı bir web sekmesinde açar."
+    )
     
     st.markdown("---")
     st.markdown("#### 📡 Ajan & Altyapı Radarı")
@@ -231,6 +275,12 @@ with st.sidebar:
         st.markdown(f'<span class="badge-green">🔑 Key Havuzu</span><br><small style="color:#94A3B8">{len(API_KEY_POOL)} Adet (.env)</small>', unsafe_allow_html=True)
     with col_sb4:
         st.markdown(f'<span class="badge-cyan">💾 SQLite DB</span><br><small style="color:#94A3B8">enterprise.db</small>', unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown("#### 🏛️ Meta-Düzlem & İkinci Beyin")
+    meta_doc_count = len(list_vault_documents())
+    st.markdown(f'<span class="badge-gold">📚 Yaşayan Belge: {meta_doc_count} Adet</span>', unsafe_allow_html=True)
+    st.caption("🤝 Co-Founder • ⚡ The Skeptic • 📜 Chief of Staff")
 
     st.markdown("---")
     st.markdown("#### 📂 Proje Oturumu (Thread ID)")
@@ -330,15 +380,345 @@ st.markdown(f"""
 # ==============================================================================
 # 6. Ana Sekmeler (Executive Cockpit Tabs)
 # ==============================================================================
-tab_chat, tab_reports, tab_database, tab_radar = st.tabs([
-    "💬 1. CEO İletişim & Operasyon Masası",
-    "📋 2. Elle Tutulur Raporlar & Çıktılar",
-    "🗄️ 3. Veritabanı & Geçmiş Denetimi",
-    "🏢 4. Departman Matrisi & Şirket Radarı"
+tab_meta, tab_swe, tab_chat, tab_reports, tab_database, tab_radar = st.tabs([
+    "🏛️ 0. Kurucular Odası & İkinci Beyin (Meta-Düzlem)",
+    "🛠️ 1. Otonom Kodlayıcı & SWE-Agent Studio",
+    "💬 2. CEO İletişim & Operasyon Masası",
+    "📋 3. Elle Tutulur Raporlar & Çıktılar",
+    "🗄️ 4. Veritabanı & Geçmiş Denetimi",
+    "🏢 5. Departman Matrisi & Şirket Radarı"
 ])
 
 # ------------------------------------------------------------------------------
-# TAB 1: CEO İLETİŞİM & CANLI OPERASYON MASASI
+# TAB 0: KURUCULAR ODASI & İKİNCİ BEYİN (META-DÜZLEM & STRATEJİ MASASI)
+# ------------------------------------------------------------------------------
+with tab_meta:
+    st.markdown("#### 🏛️ Kurucular Odası & İkinci Beyin (Meta-Strateji Masası)")
+    st.caption(
+        "Operasyonel kod ve görev karmaşasından bağımsız olarak; yapay zeka kurucu ortağınızla şirket yapısını, "
+        "vizyonu, radikal pivotları ve şirket dışındaki serbest konuları konuşun. Tartışılanları tek tıkla "
+        "kalıcı İkinci Beyin (Second Brain) kasasında arşivleyin veya operasyonel CEO'ya direktif olarak iletin."
+    )
+
+    # 1. Meta-Ajan Kadrosu ve Durum Rozetleri
+    col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+    with col_m1:
+        st.markdown('<span class="badge-gold">🤝 AI Co-Founder</span><br><small style="color:#94A3B8">Vizyon & Stratejik Düşünce</small>', unsafe_allow_html=True)
+    with col_m2:
+        st.markdown('<span class="badge-cyan">⚡ The Skeptic</span><br><small style="color:#94A3B8">Şeytanın Avukatı / Red Team</small>', unsafe_allow_html=True)
+    with col_m3:
+        st.markdown('<span class="badge-green">📜 Chief of Staff</span><br><small style="color:#94A3B8">Hafıza & ADR Muhafızı</small>', unsafe_allow_html=True)
+    with col_m4:
+        all_vault_docs = list_vault_documents()
+        st.markdown(f'<span class="badge-gold">📚 Bilgi Kasası</span><br><small style="color:#94A3B8">{len(all_vault_docs)} Yaşayan Belge</small>', unsafe_allow_html=True)
+
+    st.markdown("<div style='margin-top: 14px;'></div>", unsafe_allow_html=True)
+
+    # 2. Çalışma Modu Seçimi
+    meta_mode = st.radio(
+        "🎯 Masadaki Görüşme Modu:",
+        [
+            "🤝 Co-Founder ile Serbest Sohbet (Vizyon, Felsefe, Şirket Yapısı & Dış Dünya)",
+            "⚡ Şeytanın Avukatı ile Stres Testi (Kör Noktalar, Maliyet Tuzakları, Batış Riskleri)",
+            "🏛️ Kurucular Konseyi (Yuvarlak Masa: Co-Founder + Skeptic Çarpışması & Sentez)"
+        ],
+        horizontal=True
+    )
+
+    # 3. Sohbet Konteyneri
+    meta_chat_container = st.container(height=380)
+    with meta_chat_container:
+        if not st.session_state.meta_chat_history:
+            st.info(
+                "👋 **Hoş geldiniz Sayın Kurucu ve Başkan!**\n\n"
+                "Burası günlük operasyonel kod karmaşasından izole **Kurucular Odası**'dır. "
+                "Burada şirketimizin hedeflerini, büyük pazar pivotlarını, eğitim vizyonumuzu veya şirket dışındaki "
+                "felsefi/teknolojik her konuyu serbestçe konuşabiliriz.\n\n"
+                "💡 **Nasıl kullanılır?** Aşağıdan bir mod seçip fikrinizi yazın. Masadaki Co-Founder ve Şeytanın Avukatı "
+                "sizinle tartışmaya hazır!"
+            )
+        
+        for msg in st.session_state.meta_chat_history:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            
+            if role == "user":
+                with st.chat_message("user", avatar="👔"):
+                    st.write(content)
+            elif role == "Co-Founder":
+                with st.chat_message("assistant", avatar="🤝"):
+                    st.markdown(f"**🤝 [CO-FOUNDER & STRATEJİST]:**\n\n{content}")
+            elif role == "Skeptic":
+                with st.chat_message("assistant", avatar="⚡"):
+                    st.markdown(f"**⚡ [ŞEYTANIN AVUKATI / RED TEAM]:**\n\n{content}")
+            elif role == "Scribe":
+                with st.chat_message("assistant", avatar="📜"):
+                    st.markdown(f"**📜 [CHIEF OF STAFF SENTEZİ & DİREKTİF]:**\n\n{content}")
+            else:
+                with st.chat_message("assistant", avatar="🏛️"):
+                    st.markdown(content)
+
+    # 4. Hızlı Aksiyon ve İkinci Beyin Araç Çubuğu
+    col_act1, col_act2, col_act3, col_act4 = st.columns(4)
+    with col_act1:
+        if st.button("💡 Beyin Fırtınası Kaydet", use_container_width=True):
+            if not st.session_state.meta_chat_history:
+                st.warning("Kaydedilecek bir görüşme geçmişi bulunamadı.")
+            else:
+                with st.spinner("📜 Chief of Staff konuşmayı analiz ediyor ve Markdown kasasına kaydediyor..."):
+                    saved_path = save_session_as_brainstorm(st.session_state.meta_chat_history)
+                    st.success(f"✅ Beyin fırtınası kaydedildi: `{os.path.basename(saved_path)}`")
+    
+    with col_act2:
+        if st.button("🏛️ Stratejik Karar (ADR) Kaydet", use_container_width=True):
+            if not st.session_state.meta_chat_history:
+                st.warning("Kaydedilecek bir karar geçmişi bulunamadı.")
+            else:
+                with st.spinner("📜 Resmi Stratejik Karar Kaydı (ADR) oluşturuluyor..."):
+                    saved_path = save_session_as_adr(st.session_state.meta_chat_history)
+                    st.success(f"✅ ADR Kaydı oluşturuldu: `{os.path.basename(saved_path)}`")
+
+    with col_act3:
+        if st.button("🚀 Operasyona Aktar (CEO'ya Gönder)", use_container_width=True, type="primary"):
+            if not st.session_state.meta_chat_history:
+                st.warning("Operasyona aktarılacak bir strateji henüz tartışılmadı.")
+            else:
+                with st.spinner("🎯 Tartışma CEO direktifine dönüştürülüyor..."):
+                    bridge_res = bridge_meta_to_operational_directive(st.session_state.meta_chat_history)
+                    st.session_state.quick_directive = bridge_res["directive_text"]
+                    st.success(f"✅ '{bridge_res['title']}' görevi CEO Masasına aktarıldı! '💬 1. CEO İletişim Masası' sekmesinden hemen çalıştırabilirsiniz.")
+
+    with col_act4:
+        if st.button("🧹 Odayı Temizle (Yeni Oturum)", use_container_width=True):
+            st.session_state.meta_chat_history = []
+            st.rerun()
+
+    # 5. Kullanıcı Giriş Alanı
+    meta_input = st.chat_input("Kurucular Odasında tartışılacak fikri, vizyonu veya sorunuzu yazın...", key="meta_chat_input")
+    if meta_input:
+        st.session_state.meta_chat_history.append({"role": "user", "content": meta_input})
+        
+        if "Co-Founder ile Serbest" in meta_mode:
+            with st.spinner("🤝 Co-Founder vizyonunuzu genişleterek düşünüyor..."):
+                reply = chat_with_cofounder(meta_input, st.session_state.meta_chat_history[:-1])
+                st.session_state.meta_chat_history.append({"role": "Co-Founder", "content": reply})
+                st.rerun()
+        elif "Şeytanın Avukatı" in meta_mode:
+            with st.spinner("⚡ Şeytanın Avukatı kör noktaları ve batış risklerini inceliyor..."):
+                reply = chat_with_skeptic(meta_input, st.session_state.meta_chat_history[:-1])
+                st.session_state.meta_chat_history.append({"role": "Skeptic", "content": reply})
+                st.rerun()
+        else:
+            # Kurucular Konseyi (Yuvarlak Masa)
+            with st.spinner("🏛️ Kurucular Konseyi toplanıyor (Co-Founder + Skeptic Çarpışması)..."):
+                council = run_boardroom_council_debate(meta_input, st.session_state.meta_chat_history[:-1])
+                st.session_state.meta_chat_history.append({"role": "Co-Founder", "content": council["cofounder"]})
+                st.session_state.meta_chat_history.append({"role": "Skeptic", "content": council["skeptic"]})
+                st.session_state.meta_chat_history.append({"role": "Scribe", "content": council["scribe_synthesis"]})
+                st.rerun()
+
+    # 6. İkinci Beyin Kasası Gezgini (Second Brain Explorer)
+    st.markdown("---")
+    with st.expander("📚 İkinci Beyin Bilgi Kasası & Yaşayan Notlar (Knowledge Vault Explorer)", expanded=False):
+        v_docs = list_vault_documents()
+        if not v_docs:
+            st.info("Bilgi kasasında henüz belge bulunmuyor.")
+        else:
+            col_vd1, col_vd2 = st.columns([1, 2])
+            with col_vd1:
+                st.markdown("##### 📁 Kasadaki Yaşayan Belgeler")
+                doc_labels = [f"{d['category']} | {d['name']}" for d in v_docs]
+                sel_idx = st.selectbox(
+                    "İncelemek istediğiniz belgeyi seçin:",
+                    range(len(v_docs)),
+                    format_func=lambda i: doc_labels[i],
+                    key="vault_doc_selector"
+                )
+                chosen_doc = v_docs[sel_idx]
+                
+                st.info(
+                    f"**Kategori:** {chosen_doc['category']}\n\n"
+                    f"**Dosya Yolu:** `{chosen_doc['rel_path']}`\n\n"
+                    f"**Boyut:** {chosen_doc['size_kb']} KB\n\n"
+                    f"**Son Güncelleme:** {chosen_doc['modified']}"
+                )
+            
+            with col_vd2:
+                st.markdown(f"##### 📄 Belge Önizlemesi: `{chosen_doc['name']}`")
+                doc_content = read_document_content(chosen_doc["path"])
+                
+                if "01_sirket_vizyonu.md" in chosen_doc["name"]:
+                    edited_vision = st.text_area("Şirket Vizyonunu Canlı Düzenle:", value=doc_content, height=320)
+                    if st.button("💾 Şirket Vizyonunu Güncelle & Kaydet"):
+                        if update_company_vision(edited_vision):
+                            st.success("✅ Şirket Vizyonu ve Manifestosu güncellendi!")
+                            st.rerun()
+                else:
+                    st.markdown(
+                        f"""<div style="background-color:#1E293B; padding:18px; border-radius:10px; border:1px solid #334155; max-height:400px; overflow-y:auto;">
+                        {doc_content}
+                        </div>""",
+                        unsafe_allow_html=True
+                    )
+
+# ------------------------------------------------------------------------------
+# TAB 1: OTONOM KODLAYICI & SWE-AGENT STUDIO
+# ------------------------------------------------------------------------------
+with tab_swe:
+    st.markdown("#### 🛠️ Otonom Yazılım Mühendisi & Kod Stüdyosu (SWE-Agent Studio)")
+    st.caption(
+        "Devin, Aider ve Claude Engineer standartlarında; projenizdeki dosyaları açıp okuyan, "
+        "AST doğrulamalı kod yazan, renkli diff çıkaran ve 'Diske Yaz' dediğinizde fiilen kaynak kodları "
+        "atomik olarak güncelleyen gerçek yapay zeka mühendisi."
+    )
+
+    # Üst Güvenlik ve Durum Rozetleri
+    col_sw1, col_sw2, col_sw3, col_sw4 = st.columns(4)
+    with col_sw1:
+        st.markdown('<span class="badge-green">🛡️ Sandbox Duvarı</span><br><small style="color:#94A3B8">Aktif (Proje İçi Sınırlı)</small>', unsafe_allow_html=True)
+    with col_sw2:
+        st.markdown('<span class="badge-cyan">🧪 AST & py_compile</span><br><small style="color:#94A3B8">0 Sözdizimi Hatası Denetimi</small>', unsafe_allow_html=True)
+    with col_sw3:
+        st.markdown('<span class="badge-gold">💾 Atomik Snapshot</span><br><small style="color:#94A3B8">Yazım Öncesi Otomatik .bak</small>', unsafe_allow_html=True)
+    with col_sw4:
+        backups_count = len(CodeSnapshotManager.list_snapshots())
+        st.markdown(f'<span class="badge-green">↩️ Rollback Kasası</span><br><small style="color:#94A3B8">{backups_count} Güvenli Yedek</small>', unsafe_allow_html=True)
+
+    st.markdown("<div style='margin-top: 14px;'></div>", unsafe_allow_html=True)
+
+    # Dosya Seçimi ve Bilgi Kartı
+    all_proj_files = CodeInspector.list_project_files()
+    col_file1, col_file2 = st.columns([2, 1])
+    with col_file1:
+        default_idx = all_proj_files.index("yonetici_masasi.py") if "yonetici_masasi.py" in all_proj_files else 0
+        target_file_selected = st.selectbox(
+            "Hedef Dosya Seçin (Üzerinde çalışılacak kaynak kod):",
+            options=all_proj_files,
+            index=default_idx,
+            help="SWE-Agent bu dosyayı okuyacak, analiz edecek ve verdiğiniz direktife göre güncelleyecektir."
+        )
+    with col_file2:
+        try:
+            _, total_f_lines = CodeInspector.read_workspace_file(target_file_selected)
+            abs_p = WorkspaceSecurity.validate_path(target_file_selected)
+            f_size_kb = round(os.path.getsize(abs_p) / 1024, 2)
+            st.info(f"📄 **Boyut:** {f_size_kb} KB | **Satır Sayısı:** {total_f_lines}\n\n🔒 **Güvenlik:** Doğrulandı")
+        except Exception as e:
+            st.error(f"Dosya okuma hatası: {e}")
+
+    # Direktif Giriş Alanı
+    swe_instruction = st.text_area(
+        "Mühendise Kodlama / Refactoring Direktifinizi Verin:",
+        placeholder="Örnek: Bu dosyadaki CSS kodlarını incele. AI Slop renkleri (fosforlu cyan, sarı, parlayan kırmızı kutu) kaldır ve Linear.app koyu kömür minimalizmini uygula.",
+        height=95,
+        help="Ajan bu talimatı inceleyecek, dosyayı okuyacak, AST denetimli kodu üretecek ve size diff çıkaracaktır."
+    )
+
+    col_btn_run, col_btn_clear = st.columns([3, 1])
+    with col_btn_run:
+        btn_plan = st.button("🧠 Kodu Analiz Et & Diff Üret (SWE-Agent Çalıştır)", type="primary", use_container_width=True)
+    with col_btn_clear:
+        if st.button("🧹 Temizle", use_container_width=True):
+            st.session_state.swe_active_patch = None
+            st.rerun()
+
+    if btn_plan:
+        if not swe_instruction.strip():
+            st.warning("Lütfen mühendise ne yapması gerektiğini anlatan bir direktif yazın.")
+        else:
+            with st.spinner("🤖 SWE-Agent dosyayı inceliyor, AST sözdizimi doğrulamalı kodu üretiyor..."):
+                try:
+                    patch_result = plan_and_generate_code_patch(
+                        instruction=swe_instruction,
+                        target_file=target_file_selected
+                    )
+                    st.session_state.swe_active_patch = patch_result
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"SWE-Agent çalıştırma hatası: {e}")
+
+    # DİFF VE HUMAN-IN-THE-LOOP ONAY KARTI
+    active_patch = st.session_state.get("swe_active_patch")
+    if active_patch:
+        st.markdown("---")
+        st.markdown("### 🔍 Kod Değişikliği Önizleme & Onay Masası")
+
+        if active_patch["syntax_valid"]:
+            st.success(
+                f"✅ **AST Sözdizimi Testi: GEÇTİ (0 HATA)** | "
+                f"**Hedef:** `{active_patch['target_file']}` | "
+                f"**Deneme:** {active_patch.get('iterations_taken', 0)} iterasyon"
+            )
+        else:
+            st.error(f"❌ **Sözdizimi Hatası:** {active_patch.get('syntax_error')}")
+
+        st.markdown(f"**📌 Mühendisin Değişiklik Özeti:**\n{active_patch['summary']}")
+
+        # Diff Görüntüleyici
+        diff_text = active_patch.get("diff", "")
+        if diff_text:
+            st.markdown("##### 📄 Renkli Unified Diff (Eski vs Yeni):")
+            st.code(diff_text, language="diff")
+        else:
+            st.info("Dosyada bir değişiklik tespit edilmedi veya önerilen kod mevcut kodla aynı.")
+
+        # Onay ve İcra Butonları
+        col_exec1, col_exec2, col_exec3 = st.columns([2, 1, 1])
+        with col_exec1:
+            if st.button("🚀 Onayla & Diske Yaz (Apply to Disk)", type="primary", use_container_width=True, disabled=not active_patch["syntax_valid"]):
+                with st.spinner("💾 Otomatik .bak yedeği alınıyor ve dosya atomik olarak diske yazılıyor..."):
+                    try:
+                        res = execute_approved_code_patch(
+                            target_file=active_patch["target_file"],
+                            new_content=active_patch["proposed_content"]
+                        )
+                        st.session_state.swe_last_backup = res.get("backup_path")
+                        st.session_state.swe_active_patch = None
+                        st.success(f"🎉 **BAŞARILI!** Kod diske yazıldı. Otomatik yedek: `{os.path.basename(res['backup_path']) if res.get('backup_path') else 'Yok'}`")
+                        st.balloons()
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Diske yazma hatası: {e}")
+
+        with col_exec2:
+            if st.button("❌ Değişikliği Reddet", use_container_width=True):
+                st.session_state.swe_active_patch = None
+                st.info("Önerilen kod değişikliği iptal edildi.")
+                st.rerun()
+
+        with col_exec3:
+            if st.button("↩️ Son Yedeğe Dön (Rollback)", use_container_width=True):
+                try:
+                    rollback_code_change(active_patch["target_file"])
+                    st.success(f"✅ `{active_patch['target_file']}` son yedeğe başarıyla geri döndürüldü!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Rollback hatası: {e}")
+
+    # Geçmiş Yedekler Gezgini
+    st.markdown("---")
+    with st.expander("📂 Otomatik Kod Yedekleri Kasası (.backups/) & Rollback Geçmişi", expanded=False):
+        snapshots = CodeSnapshotManager.list_snapshots()
+        if not snapshots:
+            st.caption("Henüz bir yedek dosyası (.bak) bulunmuyor.")
+        else:
+            for s in snapshots[:10]:
+                col_s1, col_s2 = st.columns([3, 1])
+                with col_s1:
+                    st.code(f"{s['filename']} ({s['size_kb']} KB) - {s['timestamp']}", language="bash")
+                with col_s2:
+                    if st.button("Geri Yükle", key=f"btn_res_{s['filename']}"):
+                        try:
+                            # Dosya adından hedefi çıkar (YYYYMMDD_HHMMSS_filename.bak -> filename)
+                            raw_name = "_".join(s["filename"].split("_")[2:]).replace(".bak", "")
+                            CodeSnapshotManager.restore_snapshot(s["path"], raw_name)
+                            st.success(f"✅ '{raw_name}' başarıyla bu yedeğe geri döndürüldü!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Geri yükleme hatası: {e}")
+
+# ------------------------------------------------------------------------------
+# TAB 2: CEO İLETİŞİM & CANLI OPERASYON MASASI
 # ------------------------------------------------------------------------------
 with tab_chat:
     st.markdown("#### 👑 CEO Strateji Masası ile Doğrudan İletişim")

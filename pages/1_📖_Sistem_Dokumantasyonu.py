@@ -79,7 +79,8 @@ with st.sidebar:
     st.caption("Otonom Ajan Şirketi Teknik Whitepaper")
     
     st.markdown("---")
-    st.page_link("yonetici_masasi.py", label="👑 Yönetici Kokpitine Dön", icon="⬅️")
+    st.link_button("👑 Yönetici Kokpitini Aç ↗", url="/", type="primary", use_container_width=True, help="Yönetici Kokpiti ve CEO İletişim Masasını ayrı sekmede açar.")
+    st.page_link("yonetici_masasi.py", label="👑 Kokpite Dön (Aynı Sekme)", icon="⬅️")
     st.markdown("---")
     
     st.markdown("#### 📑 İçindekiler")
@@ -89,10 +90,11 @@ with st.sidebar:
     - **3. Çekirdek Kod İncelemesi**
     - **4. Güvenlik & HITL Bütçe Kilidi**
     - **5. SQLite Veritabanı Şeması**
+    - **6. Meta-Düzlem & İkinci Beyin (Second Brain)**
     """)
     
     st.markdown("---")
-    st.caption("Versiyon: v3.2 Enterprise\nMotor: LangGraph + SQLite")
+    st.caption("Versiyon: v3.5 Enterprise\nMotor: LangGraph + SQLite + Meta-Layer")
 
 # Ana Başlık
 st.markdown("""
@@ -101,7 +103,7 @@ st.markdown("""
         <div>
             <h1 style="margin:0; font-size: 26px; color: #F8FAFC;">📖 OTONOM AJAN ŞİRKETİ | SİSTEM DÖKÜMANTASYONU</h1>
             <p style="margin: 4px 0 0 0; color: #94A3B8; font-size: 14px;">
-                Mühendislik Standartları • Supervisor Orkestrasyonu • SQLite Kalıcılığı • Failover Mekanizmaları
+                Mühendislik Standartları • Supervisor Orkestrasyonu • SQLite Kalıcılığı • Meta-Düzlem & İkinci Beyin
             </p>
         </div>
         <div>
@@ -112,12 +114,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Sekmeler
-tab_quick, tab_arch, tab_code, tab_security, tab_db = st.tabs([
+tab_quick, tab_arch, tab_code, tab_security, tab_db, tab_meta_doc = st.tabs([
     "⚡ 1. Hızlı Kullanım Özeti (Executive Cheatsheet)",
     "🏗️ 2. Uçtan Uca Mimari & LangGraph Akışı",
     "💻 3. Çekirdek Kod Katmanı",
     "🛑 4. Güvenlik, HITL & API Key Rotasyonu",
-    "🗄️ 5. SQLite Veritabanı Şeması"
+    "🗄️ 5. SQLite Veritabanı Şeması",
+    "🏛️ 6. Meta-Düzlem & İkinci Beyin (Second Brain)"
 ])
 
 # ==============================================================================
@@ -361,3 +364,41 @@ with tab_db:
         conn.close()
     else:
         st.info("enterprise.db dosyası henüz oluşturulmadı. Bir proje başlattığınızda otomatik üretilecektir.")
+
+# ==============================================================================
+# TAB 6: META-DÜZLEM & İKİNCİ BEYİN MİMARİSİ
+# ==============================================================================
+with tab_meta_doc:
+    st.markdown("### 🏛️ Çift Düzlemli Bilişsel Mimari (Dual-Plane Cognitive Architecture)")
+    st.caption("Meta-Düzlem (Kurucular Odası & İkinci Beyin) ile Operasyonel Düzlem (LangGraph Ajan Şirketi) Arasındaki Ayrım")
+
+    st.markdown("""
+    Yapay zeka literatüründe ve kurumsal şirketlerde, yalnızca alt düzey işleri yürüten işçi ajanlar ile çalışıldığında
+    şirketin vizyonu, felsefesi ve stratejik pivotları kaybolur. Bu nedenle sistemimiz **Çift Düzlemli (Dual-Plane)** olarak yapılandırılmıştır:
+    """)
+
+    st.markdown("""
+    #### 1. Bilişsel Düzlemler Arasındaki Görev Dağılımı:
+    - **🏛️ Düzlem 0: Meta-Düzlem (Think-Tank & Second Brain):**
+      - **Rol:** Şirket yapısı, felsefe, vizyon, yeni ürün hipotezleri, büyük pivotlar ve şirket dışı serbest konular.
+      - **Ajanlar:** 
+        - `🤝 AI Co-Founder`: Vizyoner, ilham verici kurucu ortak.
+        - `⚡ The Skeptic (Şeytanın Avukatı)`: Kör noktaları deşen, maliyet tuzaklarını gösteren red-team eleştirmeni.
+        - `📜 Chief of Staff (Scribe)`: Tartışmaları yapılandırıp `meta_bellek/` bilgi kasasına kaydeden hafıza muhafızı.
+      - **Hafıza:** Dosya tabanlı yaşayan Markdown Bilgi Kasası (`meta_bellek/`).
+
+    - **⚙️ Düzlem 1: Operasyon Düzlemi (LangGraph Execution Engine):**
+      - **Rol:** Meta düzlemde filtrelenip onaylanan somut direktifleri icra etmek.
+      - **Ajanlar:** CEO Supervisor, Araştırma Departmanı, Mühendislik Departmanı, Denetim/Bütçe Departmanı.
+      - **Hafıza:** Durum geçişli SQLite Checkpointer (`enterprise.db`).
+
+    #### 2. Kalıcı İkinci Beyin Kasası (`meta_bellek/`):
+    - `01_sirket_vizyonu.md`: Şirketin ana manifestosu ve temel ilkeleri.
+    - `02_beyin_firtinasi_notlari/`: Tarihli, etiketli kurucu beyin fırtınaları.
+    - `03_stratejik_kararlar/`: Mimari ve Stratejik Karar Kayıtları (ADR).
+    - `04_operasyonel_direktifler/`: CEO ve operasyona aktarılan resmi görevler.
+
+    #### 3. Stratejik Direktif Köprüsü (`direktif_koprusu.py`):
+    Kurucular Odası'nda saatlerce süren serbest ve felsefi bir tartışma bittiğinde, tek bir tıkla (`🚀 Operasyona Aktar`)
+    Chief of Staff tartışmayı operasyonel bir brife dönüştürür ve CEO masasına otomatik olarak enjekte eder.
+    """)
