@@ -79,6 +79,11 @@ st.markdown("""
         font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif !important;
     }
 
+    /* Streamlit Varsayılan Çoklu Sayfa Menüsünü (SidebarNav) Gizle */
+    [data-testid="stSidebarNav"] {
+        display: none !important;
+    }
+
     /* Kenar Çubuğu (Sidebar) */
     [data-testid="stSidebar"] {
         background-color: var(--surface-1) !important;
@@ -92,6 +97,42 @@ st.markdown("""
         border-radius: 10px;
         padding: 18px 24px;
         margin-bottom: 20px;
+    }
+
+    /* Operasyon Takip Çizelgesi (Executive Stepper) */
+    .stepper-panel {
+        background-color: var(--surface-1);
+        border: 1px solid var(--hairline);
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin-bottom: 16px;
+    }
+    .step-card {
+        background-color: var(--surface-2);
+        border: 1px solid var(--hairline);
+        border-radius: 8px;
+        padding: 10px 12px;
+        min-height: 85px;
+        transition: all 0.2s ease;
+    }
+    .step-card:hover {
+        border-color: var(--hairline-strong);
+    }
+    .step-card-done {
+        border-color: rgba(16, 185, 129, 0.40) !important;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(16, 185, 129, 0.01) 100%) !important;
+    }
+    .step-card-hitl {
+        border-color: rgba(244, 63, 94, 0.65) !important;
+        background: linear-gradient(135deg, rgba(244, 63, 94, 0.12) 0%, rgba(225, 29, 72, 0.04) 100%) !important;
+    }
+    .step-card-running {
+        border-color: rgba(56, 189, 248, 0.60) !important;
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.10) 0%, rgba(14, 165, 233, 0.03) 100%) !important;
+    }
+    .step-card-pending {
+        border-color: rgba(255, 255, 255, 0.06) !important;
+        opacity: 0.65;
     }
 
     /* Minimalist Rozetler (Pills) */
@@ -254,6 +295,122 @@ def get_clean_text(content) -> str:
     elif isinstance(content, list):
         return " ".join([b.get("text", "") if isinstance(b, dict) else str(b) for b in content])
     return str(content)
+
+def get_pipeline_status(thread_id: str) -> dict:
+    """Belirtilen proje için tüm departmanların anlık durum ve çıktı özetini döndürür."""
+    config = {"configurable": {"thread_id": thread_id}}
+    try:
+        snap = sirket_motoru.app.get_state(config)
+    except Exception:
+        snap = None
+        
+    values = snap.values if snap and snap.values else {}
+    next_nodes = snap.next if snap and snap.next else ()
+    
+    has_messages = bool(values.get("messages"))
+    has_research = bool(values.get("research_summary"))
+    has_code = bool(values.get("code_deliverable"))
+    is_audit_passed = bool(values.get("is_audit_passed"))
+    allocated_budget = values.get("allocated_budget")
+    is_waiting_hitl = bool("Audit_Approval_Dept" in next_nodes)
+    
+    # 1. CEO & Strateji
+    if has_messages or has_research or has_code:
+        s1 = {"status": "done", "label": "✅ TAMAMLANDI", "class": "step-card-done", "detail": "Direktif analiz edildi, strateji belirlendi."}
+    else:
+        s1 = {"status": "pending", "label": "⚪ BEKLEMEDE", "class": "step-card-pending", "detail": "Yönetim Kurulu direktifi bekleniyor."}
+        
+    # 2. Pazar Araştırması
+    if has_research:
+        s2 = {"status": "done", "label": "✅ TAMAMLANDI", "class": "step-card-done", "detail": "Sektör ve rakip pazar istihbaratı hazır."}
+    elif has_messages and not has_code and not is_waiting_hitl and not is_audit_passed:
+        s2 = {"status": "running", "label": "⏳ ANALİZ EDİLİYOR", "class": "step-card-running", "detail": "Pazar dinamikleri taranıyor..."}
+    else:
+        s2 = {"status": "pending", "label": "⚪ SIRADA", "class": "step-card-pending", "detail": "Pazar araştırması sırada bekliyor."}
+        
+    # 3. Yazılım Mühendisliği
+    if has_code:
+        s3 = {"status": "done", "label": "✅ TAMAMLANDI", "class": "step-card-done", "detail": "Kurumsal Python mikroservis kodu derlendi."}
+    elif has_research and not is_waiting_hitl and not is_audit_passed:
+        s3 = {"status": "running", "label": "⏳ KODLANIYOR", "class": "step-card-running", "detail": "FastAPI mimarisi inşa ediliyor..."}
+    else:
+        s3 = {"status": "pending", "label": "⚪ SIRADA", "class": "step-card-pending", "detail": "Pazar raporu sonrası kodlanacak."}
+        
+    # 4. Bütçe Denetimi (HITL)
+    if is_audit_passed and allocated_budget:
+        s4 = {"status": "done", "label": "✅ ONAYLANDI", "class": "step-card-done", "detail": f"{allocated_budget:,.0f} TL bütçe tahsis edildi (BGT-8842)."}
+    elif is_waiting_hitl:
+        s4 = {"status": "hitl", "label": "🛑 ONAY BEKLİYOR", "class": "step-card-hitl", "detail": "250.000 TL şirket bütçesi için Yönetim Kurulu onayı bekleniyor."}
+    else:
+        s4 = {"status": "pending", "label": "⚪ SIRADA", "class": "step-card-pending", "detail": "Mühendislik kodu onayına tabi."}
+        
+    # 5. Nihai Teslimat
+    if is_audit_passed and not is_waiting_hitl:
+        s5 = {"status": "done", "label": "🚀 TESLİM EDİLDİ", "class": "step-card-done", "detail": "Proje başarıyla tamamlandı, raporlar hazır."}
+    else:
+        s5 = {"status": "pending", "label": "⚪ SIRADA", "class": "step-card-pending", "detail": "Bütçe onayı sonrası teslim edilecek."}
+        
+    overall = "YENİ PROJE"
+    overall_color = "#6B7280"
+    if is_waiting_hitl:
+        overall = "🛑 YÖNETİCİ ONAYI BEKLENİYOR (HITL)"
+        overall_color = "#FB7185"
+    elif is_audit_passed and not is_waiting_hitl:
+        overall = "✅ PROJE TAMAMLANDI & TESLİM EDİLDİ"
+        overall_color = "#34D399"
+    elif has_messages:
+        overall = "⚡ OPERASYON YÜRÜTÜLÜYOR"
+        overall_color = "#38BDF8"
+
+    return {
+        "is_waiting_hitl": is_waiting_hitl,
+        "is_completed": bool(is_audit_passed and not is_waiting_hitl),
+        "overall_text": overall,
+        "overall_color": overall_color,
+        "steps": [
+            {"num": "1", "name": "👑 CEO & Strateji", "dept": "Executive Board", **s1},
+            {"num": "2", "name": "🔬 Pazar Araştırması", "dept": "Araştırma Dept", **s2},
+            {"num": "3", "name": "💻 Mühendislik Kodu", "dept": "Yazılım Dept", **s3},
+            {"num": "4", "name": "🛑 Bütçe Onayı (HITL)", "dept": "Finans & Denetim", **s4},
+            {"num": "5", "name": "🚀 Nihai Teslimat", "dept": "Operasyon", **s5},
+        ]
+    }
+
+def render_pipeline_stepper(thread_id: str):
+    """Canlı Operasyon & Departman Takip Çizelgesini görselleştirir."""
+    pipeline = get_pipeline_status(thread_id)
+    
+    st.markdown(f"""
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding: 2px 2px;">
+        <div style="font-size:13px; font-weight:600; color:#E2E8F0; letter-spacing:0.02em;">
+            🏢 CANLI OPERASYON & DEPARTMAN ÇALIŞMA DURUMU
+        </div>
+        <div>
+            <span style="font-size:12px; font-weight:600; color:{pipeline['overall_color']};">
+                {pipeline['overall_text']}
+            </span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    cols = st.columns(5)
+    for i, step in enumerate(pipeline["steps"]):
+        with cols[i]:
+            st.markdown(f"""
+            <div class="step-card {step['class']}">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <span style="font-size:11px; font-weight:600; color:#F8FAFC;">{step['name']}</span>
+                </div>
+                <div style="font-size:10px; margin-bottom:5px;">
+                    <span style="font-weight:600;">{step['label']}</span>
+                </div>
+                <div style="font-size:10px; color:#9CA3AF; line-height:1.3;">
+                    {step['detail']}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    st.markdown("<div style='margin-bottom:12px;'></div>", unsafe_allow_html=True)
 
 # ==============================================================================
 # 3. Oturum Durumu (Session State) Yönetimi
@@ -560,8 +717,11 @@ with tab_chat:
     st.markdown("#### 👑 CEO Strateji Masası ile Doğrudan İletişim")
     st.caption("Doğrudan ana ajanınızla (CEO) konuşun, şirket direktifi verin veya departmanları seferber edin.")
 
+    # CANLI OPERASYON VE DEPARTMAN İLERLEME ÇİZELGESİ (EXECUTIVE STEPPER)
+    render_pipeline_stepper(st.session_state.active_thread_id)
+
     # Sohbet Geçmişi Alanı
-    chat_container = st.container(height=380)
+    chat_container = st.container(height=340)
     with chat_container:
         if not st.session_state.chat_history:
             st.info("👋 Merhaba Sayın Yönetim Kurulu Başkanı! Ben Otonom Şirketinizin CEO'suyum. Pazar araştırması, yazılım mimarisi veya bütçe süreçlerini başlatmak için direktifinizi bekliyorum.")
@@ -587,10 +747,21 @@ with tab_chat:
         col_hitl1, col_hitl2 = st.columns([2, 1])
         with col_hitl1:
             if st.button("✅ 250.000 TL Şirket Bütçesini ONAYLA ve Projeyi Başlat", type="primary", use_container_width=True):
-                with st.spinner("Bütçe onaylanıyor ve şirket projesi teslim ediliyor..."):
+                with st.status("🏢 Bütçe Tahsisi İşleniyor & Teslimat Tamamlanıyor...", expanded=True) as status_box:
                     config = {"configurable": {"thread_id": st.session_state.active_thread_id}}
-                    final_state = sirket_motoru.app.invoke(None, config=config)
+                    status_box.write("🛡️ **[Finans & Denetim]:** Başkanlık yetkisi işleniyor, 250.000 TL fon tahsis ediliyor...")
                     
+                    for event in sirket_motoru.app.stream(None, config=config, stream_mode="updates"):
+                        if not isinstance(event, dict):
+                            continue
+                        for node_name, node_output in event.items():
+                            if node_name == "Audit_Approval_Dept":
+                                status_box.write("🛡️ **[Finans & Denetim]:** Bütçe tahsisi onaylandı ve fon bloke edildi (Kod: BGT-8842).")
+                            elif node_name == "CEO":
+                                status_box.write("👑 **[CEO / Executive Board]:** Proje kapanış bildirimi onaylandı.")
+                    
+                    snapshot = sirket_motoru.app.get_state(config)
+                    final_state = snapshot.values or {}
                     st.session_state.waiting_for_hitl = False
                     st.session_state.current_deliverables = {
                         "research_summary": final_state.get("research_summary"),
@@ -599,7 +770,7 @@ with tab_chat:
                         "is_audit_passed": final_state.get("is_audit_passed", False),
                         "ceo_closing": get_clean_text(final_state["messages"][-1].content) if final_state.get("messages") else None
                     }
-                    
+                    status_box.update(label="🚀 Şirket Operasyonu Başarıyla Tamamlandı!", state="complete", expanded=False)
                     closing_text = st.session_state.current_deliverables["ceo_closing"] or "Proje başarıyla tamamlandı!"
                     st.session_state.chat_history.append({"role": "assistant", "content": f"👑 **[CEO BİLDİRİMİ]:** Sayın Başkanım, bütçe onayınız başarıyla işlendi ve şirket projesi tüm departmanlarca tamamlandı!\n\n{closing_text}"})
                     st.balloons()
@@ -624,7 +795,7 @@ with tab_chat:
         config = {"configurable": {"thread_id": st.session_state.active_thread_id}}
         
         if is_task:
-            with st.spinner("👑 CEO Yönetim Kurulu Direktifini İnceliyor & Departmanları Seferber Ediyor..."):
+            with st.status("🏢 Otonom Şirket Operasyonu Canlı İcra Ediliyor...", expanded=True) as status_box:
                 initial_input = {
                     "messages": [HumanMessage(content=user_prompt)],
                     "next_step": "CEO",
@@ -633,23 +804,42 @@ with tab_chat:
                     "allocated_budget": None,
                     "is_audit_passed": False
                 }
+                status_box.write("👑 **[CEO / Executive Board]:** Yönetim Kurulu direktifi inceleniyor...")
                 
-                sirket_motoru.app.invoke(initial_input, config=config)
+                for event in sirket_motoru.app.stream(initial_input, config=config, stream_mode="updates"):
+                    if not isinstance(event, dict):
+                        continue
+                    for node_name, node_output in event.items():
+                        if node_name == "CEO":
+                            next_dept = node_output.get("next_step") if isinstance(node_output, dict) else "-"
+                            status_box.write(f"👑 **[CEO / Executive Board]:** Stratejik inceleme tamamlandı ➔ Sıradaki Görev: `{next_dept}`")
+                        elif node_name == "Research_Dept":
+                            status_box.write("🔬 **[Araştırma Departmanı]:** Sektör ve rekabet istihbarat raporu tamamlandı.")
+                        elif node_name == "Engineering_Dept":
+                            status_box.write("💻 **[Mühendislik Departmanı]:** Kurumsal Python mikroservis üretim kodu derlendi.")
+                        elif node_name == "Audit_Approval_Dept":
+                            status_box.write("🛡️ **[Finans & Denetim]:** Bütçe tahsis süreci hazırlandı.")
+                        elif node_name == "__interrupt__":
+                            status_box.write("🛑 **[Güvenlik Kilidi]:** Bütçe yetkilendirme aşamasına ulaşıldı. Yönetim Kurulu onayı bekleniyor.")
+                
                 snapshot = sirket_motoru.app.get_state(config)
-                
                 st.session_state.current_deliverables["research_summary"] = snapshot.values.get("research_summary")
                 st.session_state.current_deliverables["code_deliverable"] = snapshot.values.get("code_deliverable")
                 
                 if snapshot.next and "Audit_Approval_Dept" in snapshot.next:
                     st.session_state.waiting_for_hitl = True
+                    status_box.update(label="🛑 Bütçe Onayı Bekleniyor (Human-in-the-Loop) - Departmanlar Hazır", state="running", expanded=True)
                     st.session_state.chat_history.append({
                         "role": "assistant",
-                        "content": "👑 **[CEO]:** Pazar araştırması ve üretim kodu hazırlandı! Kurumsal güvenlik politikası gereği **250.000 TL bütçe tahsisi için onayınız bekleniyor.**"
+                        "content": "👑 **[CEO]:** Pazar araştırması ve üretim kodu tamamlandı! Kurumsal güvenlik protokolü gereği **250.000 TL şirket bütçesi tahsisi için onayınız bekleniyor.**"
                     })
                 else:
                     st.session_state.waiting_for_hitl = False
+                    status_box.update(label="✅ Operasyon Başarıyla Tamamlandı", state="complete", expanded=False)
                     last_msg = snapshot.values["messages"][-1]
                     st.session_state.chat_history.append({"role": "assistant", "content": get_clean_text(last_msg.content)})
+                
+                st.rerun()
                 
                 st.rerun()
         else:

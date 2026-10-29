@@ -62,6 +62,11 @@ st.markdown("""
         font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif !important;
     }
 
+    /* Streamlit Varsayılan Çoklu Sayfa Menüsünü Gizle */
+    [data-testid="stSidebarNav"] {
+        display: none !important;
+    }
+
     /* Kenar Çubuğu (Sidebar) */
     [data-testid="stSidebar"] {
         background-color: var(--surface-1) !important;

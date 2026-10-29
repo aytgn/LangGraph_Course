@@ -23,7 +23,17 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from model_factory import get_gemini_llm
 
 load_dotenv()
-console = Console()
+
+if sys.platform == "win32":
+    try:
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+console = Console(force_terminal=False, legacy_windows=False)
 
 # ==============================================================================
 # 1. Departman Uzmanlarının Araçları (Tools)
@@ -111,6 +121,15 @@ def get_text(content) -> str:
 # 5. Departman Düğümleri (Department Nodes)
 # ==============================================================================
 
+def get_clean_user_directive(state: CompanyState) -> str:
+    """Mesaj geçmişinden orijinal kullanıcı direktifini güvenle çeker."""
+    for m in state.get("messages", []):
+        if isinstance(m, HumanMessage):
+            txt = get_text(m.content)
+            if txt and not txt.startswith("Sen ") and "MEVCUT ŞİRKET DURUMU" not in txt:
+                return txt
+    return "Kurumsal otonom şirket görevi"
+
 def ceo_supervisor_node(state: CompanyState):
     """CEO / Orkestratör: Şirket hedeflerini inceler ve süreci koordine eder."""
     console.print("\n[bold gold1]👑 [CEO / EXECUTIVE BOARD]:[/bold gold1] Şirket durumunu denetliyor ve sıradaki departmanı seçiyor...")
@@ -118,8 +137,10 @@ def ceo_supervisor_node(state: CompanyState):
     has_research = bool(state.get("research_summary"))
     has_code = bool(state.get("code_deliverable"))
     has_audit = bool(state.get("is_audit_passed"))
+    user_directive = get_clean_user_directive(state)
     
     prompt = (
+        f"YÖNETİM KURULU BAŞKANI DİREKTİFİ:\n\"{user_directive}\"\n\n"
         "Sen 'Otonom Ajan Şirketi'nin CEO'susun. 3 ana departmanı yönetiyorsun:\n"
         "1. 'Research_Dept': Pazar araştırması ve sektör analizi yapar.\n"
         "2. 'Engineering_Dept': Araştırma sonuçlarına dayanarak üretim kodu geliştirir.\n"
@@ -135,13 +156,7 @@ def ceo_supervisor_node(state: CompanyState):
         "- Eğer hepsi TAMAMLANDI ise -> Kesinlikle 'FINISH'\n"
     )
     
-    # Boş veya eksik mesajları temizle ve Gemini kuralına uygun şekilde sonuna HumanMessage ekle
-    valid_messages = [
-        m for m in state["messages"] 
-        if (isinstance(m.content, str) and m.content.strip()) or (isinstance(m.content, list) and m.content) or (hasattr(m, "tool_calls") and m.tool_calls)
-    ]
-    messages = valid_messages + [HumanMessage(content=prompt)]
-    decision: CEORouteDecision = ceo_llm.invoke(messages)
+    decision: CEORouteDecision = ceo_llm.invoke([HumanMessage(content=prompt)])
     
     console.print(f"  👉 [bold cyan]CEO Stratejik Kararı:[/bold cyan] [green]'{decision.next}'[/green] | [dim]{decision.strategic_reason}[/dim]")
     
@@ -157,11 +172,13 @@ def ceo_supervisor_node(state: CompanyState):
 def research_dept_node(state: CompanyState):
     """Araştırma ve İstihbarat Departmanı."""
     console.print("\n[bold magenta]🔬 [DEPARTMAN 1: ARAŞTIRMA & İSTİHBARAT][/bold magenta] Pazar analizi yapıyor...")
+    user_directive = get_clean_user_directive(state)
     system_prompt = (
+        f"KULLANICI TALEBİ / DİREKTİFİ: {user_directive}\n\n"
         "Sen Şirket Baş Araştırmacısısın. 'query_market_intelligence' aracını çağırarak "
         "kullanıcının talebine dair güncel piyasa verilerini topla."
     )
-    messages = state["messages"] + [HumanMessage(content=system_prompt)]
+    messages = [HumanMessage(content=system_prompt)]
     response = research_llm.invoke(messages)
     
     if hasattr(response, "tool_calls") and response.tool_calls:
@@ -179,12 +196,16 @@ def research_dept_node(state: CompanyState):
 def engineering_dept_node(state: CompanyState):
     """Mühendislik ve Ürün Departmanı."""
     console.print("\n[bold deep_sky_blue1]💻 [DEPARTMAN 2: YAZILIM & MÜHENDİSLİK][/bold deep_sky_blue1] Üretim kodunu inşa ediyor...")
+    user_directive = get_clean_user_directive(state)
+    research_summary = state.get("research_summary", "")
     system_prompt = (
+        f"KULLANICI TALEBİ: {user_directive}\n\n"
+        f"PAZAR ARAŞTIRMASI BULGULARI:\n{research_summary}\n\n"
         "Sen Şirket Baş Yazılım Mimarı ve Kıdemli Mühendisisin. "
         "Araştırma departmanının çıktılarını baz alarak 'generate_production_code' aracıyla "
         "kullanıcının talebine uygun çalışan Python modülünü oluştur."
     )
-    messages = state["messages"] + [HumanMessage(content=system_prompt)]
+    messages = [HumanMessage(content=system_prompt)]
     response = engineering_llm.invoke(messages)
     
     if hasattr(response, "tool_calls") and response.tool_calls:
@@ -202,11 +223,15 @@ def engineering_dept_node(state: CompanyState):
 def audit_approval_dept_node(state: CompanyState):
     """Kalite Denetim ve Bütçe Departmanı (Kritik İşlem)."""
     console.print("\n[bold orange3]🛡️ [DEPARTMAN 3: KALİTE & FİNANS DENETİMİ][/bold orange3] Bütçe tahsisi hazırlıyor...")
+    user_directive = get_clean_user_directive(state)
+    code_deliverable = state.get("code_deliverable", "")
     system_prompt = (
+        f"KULLANICI TALEBİ: {user_directive}\n\n"
+        f"MÜHENDİSLİK ÇIKTISI ÖZETİ:\n{code_deliverable[:200]}...\n\n"
         "Sen Şirket Finans ve Denetim Direktörüsün. Mühendisliğin ürettiği modül için "
         "şirket bütçesinden 250.000 TL bütçe tahsisi yapılması için 'authorize_project_budget' aracını çağır."
     )
-    messages = state["messages"] + [HumanMessage(content=system_prompt)]
+    messages = [HumanMessage(content=system_prompt)]
     response = audit_llm.invoke(messages)
     
     if hasattr(response, "tool_calls") and response.tool_calls:
