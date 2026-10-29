@@ -18,9 +18,10 @@ from dotenv import load_dotenv
 
 # Dizin Yapılandırması ve Bağımlılıklar
 current_dir = os.path.dirname(os.path.abspath(__file__))
-root_dir = os.path.abspath(os.path.join(current_dir, ".."))
+app_dir = os.path.abspath(os.path.join(current_dir, ".."))
+root_dir = os.path.abspath(os.path.join(app_dir, ".."))
+sys.path.insert(0, app_dir)
 sys.path.insert(0, root_dir)
-sys.path.insert(0, os.path.join(root_dir, "05_otonom_ajan_sirketi"))
 
 load_dotenv(os.path.join(root_dir, ".env"))
 
@@ -496,7 +497,7 @@ with tab_db:
     st.markdown("### 🗄️ SQLite Veritabanı Şeması & Kalıcılık")
     st.caption("enterprise.db içerisinde LangGraph checkpoints ve writes yapısı:")
 
-    db_path = os.path.join(root_dir, "05_otonom_ajan_sirketi", "enterprise.db")
+    db_path = os.path.join(app_dir, "enterprise.db")
     
     if os.path.exists(db_path):
         conn = sqlite3.connect(db_path)

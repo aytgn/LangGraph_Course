@@ -23,5 +23,5 @@ echo Durdurmak icin bu pencerede Ctrl+C tuslarina basabilirsiniz.
 echo ==============================================================================
 echo.
 
-.\.venv\Scripts\streamlit.exe run yonetici_masasi.py --theme.base="dark"
+.\.venv\Scripts\streamlit.exe run 06_yonetici_sirket\yonetici_masasi.py --theme.base="dark"
 pause

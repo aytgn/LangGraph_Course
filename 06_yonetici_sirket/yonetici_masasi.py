@@ -20,10 +20,11 @@ from dotenv import load_dotenv
 
 # Çalışma dizini ve departman modüllerinin yüklenmesi
 current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(current_dir, "05_otonom_ajan_sirketi"))
+root_dir = os.path.dirname(current_dir)
 sys.path.insert(0, current_dir)
+sys.path.insert(0, root_dir)
 
-load_dotenv()
+load_dotenv(os.path.join(root_dir, ".env"))
 
 import sirket_motoru
 from langchain_core.messages import HumanMessage, AIMessage
@@ -243,7 +244,7 @@ st.markdown("""
 # ==============================================================================
 # 2. Veritabanı Yardımcı Fonksiyonları (SQLite Görselleştirme)
 # ==============================================================================
-DB_PATH = os.path.join(current_dir, "05_otonom_ajan_sirketi", "enterprise.db")
+DB_PATH = os.path.join(current_dir, "enterprise.db")
 
 def get_all_threads():
     """enterprise.db içerisindeki tüm proje oturumlarını listeler."""

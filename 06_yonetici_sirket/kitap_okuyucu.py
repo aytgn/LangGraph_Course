@@ -25,6 +25,9 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+if not os.path.exists(os.path.join(ROOT_DIR, "LANGGRAPH_VE_OTONOM_AJANLAR_KITABI.md")):
+    ROOT_DIR = os.path.dirname(ROOT_DIR)
+
 BOOK_MD_PATH = os.path.join(ROOT_DIR, "LANGGRAPH_VE_OTONOM_AJANLAR_KITABI.md")
 BOOK_PDF_PATH = os.path.join(ROOT_DIR, "LANGGRAPH_VE_OTONOM_AJANLAR_KITABI.pdf")
 STATIC_HTML_PATH = os.path.join(ROOT_DIR, "LANGGRAPH_E_KITAP.html")
