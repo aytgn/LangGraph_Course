@@ -213,6 +213,9 @@ with st.sidebar:
     st.markdown("### 🏢 OTONOM AJAN HOLDİNG")
     st.caption("Executive Management Cockpit v3.0")
     
+    # Harici Kapsamlı Dökümantasyon Bağlantısı
+    st.page_link("pages/1_📖_Sistem_Dokumantasyonu.py", label="📖 Sistem Dökümantasyonu & Whitepaper", icon="📚")
+    
     st.markdown("---")
     st.markdown("#### 📡 Ajan & Altyapı Radarı")
     
@@ -314,6 +317,11 @@ st.markdown(f"""
         <div style="text-align: right;">
             <span style="font-size: 12px; color: #94A3B8;">Aktif Proje Oturumu</span><br>
             <span class="badge-gold" style="font-size: 14px;">🏷️ {st.session_state.active_thread_id}</span>
+            <div style="margin-top: 8px;">
+                <a href="/Sistem_Dokumantasyonu" target="_blank" style="display:inline-block; background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%); color:#FFFFFF; text-decoration:none; font-weight:600; padding:6px 14px; border-radius:6px; font-size:12px; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);">
+                    📖 Kapsamlı Mimari Dokümanı (Yeni Sekme) ↗
+                </a>
+            </div>
         </div>
     </div>
 </div>
