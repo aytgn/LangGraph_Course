@@ -261,11 +261,17 @@ with st.sidebar:
     st.markdown("### 🏢 OTONOM AJAN HOLDİNG")
     st.caption("Executive Management Cockpit v3.0")
     
-    # Birebir aynı zengin formatta ayrı web-browser sekmesinde dökümantasyonu açma butonu
+    # Birebir aynı zengin formatta ayrı web-browser sekmesinde dökümantasyonu ve başucu kitabını açma butonları
+    st.link_button(
+        "📚 LangGraph Başucu Kitabı (Yeni Sekme) ↗",
+        url="/LangGraph_Basucu_Kitabi",
+        type="primary",
+        use_container_width=True,
+        help="12 bölümlük karanlık temalı interaktif LangGraph & Otonom Ajan Mimarisi Başucu Kitabını (ve PDF indirme ekranını) ayrı bir tarayıcı sekmesinde sunucusuz açar."
+    )
     st.link_button(
         "📖 Dökümantasyonu Ayrı Sekmede Aç ↗",
         url="/Sistem_Dokumantasyonu",
-        type="primary",
         use_container_width=True,
         help="Sistem mimarisini, kod katmanlarını ve hızlı kullanım rehberini ayrı bir web sekmesinde açar."
     )
@@ -377,7 +383,10 @@ st.markdown(f"""
         <div style="text-align: right;">
             <span style="font-size: 12px; color: #94A3B8;">Aktif Proje Oturumu</span><br>
             <span class="badge-gold" style="font-size: 14px;">🏷️ {st.session_state.active_thread_id}</span>
-            <div style="margin-top: 8px;">
+            <div style="margin-top: 8px; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;">
+                <a href="/LangGraph_Basucu_Kitabi" target="_blank" style="display:inline-block; background: linear-gradient(135deg, #10B981 0%, #059669 100%); color:#042F2E; text-decoration:none; font-weight:700; padding:6px 14px; border-radius:6px; font-size:12px; box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);">
+                    📚 LangGraph Başucu Kitabı (Yeni Sekme) ↗
+                </a>
                 <a href="/Sistem_Dokumantasyonu" target="_blank" style="display:inline-block; background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%); color:#FFFFFF; text-decoration:none; font-weight:600; padding:6px 14px; border-radius:6px; font-size:12px; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);">
                     📖 Kapsamlı Mimari Dokümanı (Yeni Sekme) ↗
                 </a>

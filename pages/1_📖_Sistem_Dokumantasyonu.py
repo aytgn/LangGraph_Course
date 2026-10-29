@@ -85,6 +85,7 @@ with st.sidebar:
     
     st.markdown("---")
     st.link_button("👑 Yönetici Kokpitini Aç ↗", url="/", type="primary", use_container_width=True, help="Yönetici Kokpiti ve CEO İletişim Masasını ayrı sekmede açar.")
+    st.link_button("📚 LangGraph Başucu Kitabı ↗", url="/LangGraph_Basucu_Kitabi", use_container_width=True, help="12 bölümlük karanlık temalı interaktif LangGraph ve Ajan Mimarisi Başucu Kitabını yeni sekmede açar.")
     st.page_link("yonetici_masasi.py", label="👑 Kokpite Dön (Aynı Sekme)", icon="⬅️")
     st.markdown("---")
     

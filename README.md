@@ -19,7 +19,11 @@ LangGraph_Course/
 ├── 04_gozlemlenebilirlik/                  # Modül 4 pratik dosyaları & Atölye
 ├── 05_otonom_ajan_sirketi/                 # Büyük final şirketi projesi
 ├── yonetici_masasi.py                      # 👑 Kurumsal Yönetici Kokpiti (Streamlit)
-├── kitap_okuyucu.py                        # 📖 Karanlık Temalı Web E-Kitap Okuyucu (kitap.lvh.me)
+├── pages/
+│   ├── 1_📖_Sistem_Dokumantasyonu.py       # 📖 Teknik Sistem Dokümantasyonu (Harici Sekme)
+│   └── 2_📚_LangGraph_Basucu_Kitabi.py     # 📚 Tam Ekran İnteraktif E-Kitap Sayfası (Harici Sekme)
+├── LANGGRAPH_E_KITAP.html                  # 📖 Sunucusuz (Zero-Daemon) Tek Dosya Web E-Kitap
+├── kitap_okuyucu.py                        # 🛠️ Statik E-Kitap Derleyicisi (--build)
 ├── LANGGRAPH_VE_OTONOM_AJANLAR_KITABI.md   # 📚 12 Bölümlük Uçtan Uca Başucu Kitabı (Markdown)
 ├── LANGGRAPH_VE_OTONOM_AJANLAR_KITABI.pdf  # 📥 Başucu Kitabı (Yayın Kalitesinde PDF)
 ├── model_factory.py                        # Dinamik API Key Rotasyon Motoru
