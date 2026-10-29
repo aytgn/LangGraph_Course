@@ -1,0 +1,47 @@
+# ==========================================
+# Ortam Değişkenleri & Gizli Anahtarlar (CRITICAL SECURITY)
+# ==========================================
+.env
+.env.*
+!.env.example
+
+# ==========================================
+# Python & Sanal Ortam (Virtual Environment)
+# ==========================================
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ==========================================
+# Veritabanları (SQLite Checkpoints)
+# ==========================================
+*.db
+*.db*
+*.sqlite
+*.sqlite3
+checkpoints.db*
+enterprise.db*
+
+# ==========================================
+# Test, Rapor & Geçici Dosyalar
+# ==========================================
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# ==========================================
+# İşletim Sistemi & Editör Çöpleri
+# ==========================================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json

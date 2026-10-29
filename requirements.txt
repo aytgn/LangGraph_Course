@@ -1,0 +1,16 @@
+# LangGraph Temel & Runtime
+langgraph>=0.2.20
+langchain-core>=0.3.0
+langgraph-checkpoint-sqlite>=3.0.0
+
+# LLM Entegrasyonları (Google Gemini / Vertex AI / Argon)
+langchain-google-genai>=2.0.0
+google-generativeai>=0.8.0
+
+# Gözlemlenebilirlik
+langsmith>=0.1.120
+
+# Yardımcı ve Ortam Araçları
+python-dotenv>=1.0.1
+pydantic>=2.8.0
+rich>=13.8.0
