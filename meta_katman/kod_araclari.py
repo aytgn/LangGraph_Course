@@ -93,6 +93,49 @@ class CodeSnapshotManager:
         return backup_path
 
     @classmethod
+    def create_batch_snapshot(cls, target_paths: List[str]) -> Tuple[str, List[str]]:
+        """Birden çok dosyanın toplu (batch) zaman damgalı yedeğini alır."""
+        cls.ensure_backup_dir()
+        batch_id = f"BATCH_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        backup_files = []
+
+        for p in target_paths:
+            try:
+                abs_p = WorkspaceSecurity.validate_path(p)
+                if os.path.exists(abs_p):
+                    bname = os.path.basename(abs_p)
+                    # Dosyanın göreli yolunu güvenli isme çevir (örn: pages_1_doc.py)
+                    rel_safe = os.path.relpath(abs_p, PROJECT_ROOT).replace(os.sep, "__")
+                    backup_fname = f"{batch_id}___{rel_safe}.bak"
+                    backup_full_path = os.path.join(BACKUP_DIR, backup_fname)
+                    shutil.copy2(abs_p, backup_full_path)
+                    backup_files.append(backup_full_path)
+            except Exception:
+                continue
+
+        return batch_id, backup_files
+
+    @classmethod
+    def restore_batch_snapshot(cls, batch_id: str) -> List[str]:
+        """Belirtilen toplu yedek paketindeki tüm dosyaları eski hallerine geri yükler."""
+        cls.ensure_backup_dir()
+        restored_files = []
+        
+        for f in os.listdir(BACKUP_DIR):
+            if f.startswith(batch_id) and f.endswith(".bak"):
+                # Örn: BATCH_20261029_215500___pages__1_doc.py.bak
+                parts = f.split("___")
+                if len(parts) >= 2:
+                    rel_safe = parts[1][:-4]  # .bak kaldır
+                    rel_path = rel_safe.replace("__", os.sep)
+                    abs_target = os.path.join(PROJECT_ROOT, rel_path)
+                    snap_full = os.path.join(BACKUP_DIR, f)
+                    shutil.copy2(snap_full, abs_target)
+                    restored_files.append(rel_path)
+
+        return restored_files
+
+    @classmethod
     def list_snapshots(cls) -> List[Dict[str, str]]:
         """Mevcut tüm kod yedeklerini listeler."""
         cls.ensure_backup_dir()

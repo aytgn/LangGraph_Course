@@ -51,7 +51,11 @@ from meta_katman.kod_araclari import (
 from meta_katman.otonom_kodlayici import (
     plan_and_generate_code_patch,
     execute_approved_code_patch,
-    rollback_code_change
+    rollback_code_change,
+    discover_relevant_files_for_task,
+    plan_and_generate_codebase_patch,
+    execute_approved_codebase_patch,
+    rollback_codebase_batch
 )
 
 # ==============================================================================
@@ -241,8 +245,14 @@ if "meta_pending_directive" not in st.session_state:
 if "swe_active_patch" not in st.session_state:
     st.session_state.swe_active_patch = None
 
+if "swe_codebase_patch" not in st.session_state:
+    st.session_state.swe_codebase_patch = None
+
 if "swe_last_backup" not in st.session_state:
     st.session_state.swe_last_backup = None
+
+if "swe_last_batch_id" not in st.session_state:
+    st.session_state.swe_last_batch_id = None
 
 # ==============================================================================
 # 4. Yan Menü (Sidebar) - Şirket Paneli & Ajan Radarı
@@ -562,138 +572,162 @@ with tab_meta:
                     )
 
 # ------------------------------------------------------------------------------
-# TAB 1: OTONOM KODLAYICI & SWE-AGENT STUDIO
+# TAB 1: OTONOM KODLAYICI & SWE-AGENT STUDIO (CODEBASE-WIDE)
 # ------------------------------------------------------------------------------
 with tab_swe:
-    st.markdown("#### 🛠️ Otonom Yazılım Mühendisi & Kod Stüdyosu (SWE-Agent Studio)")
+    st.markdown("#### 🛠️ Otonom Yazılım Mühendisi & Kod Tabanı Stüdyosu (Codebase-Wide SWE Studio)")
     st.caption(
-        "Devin, Aider ve Claude Engineer standartlarında; projenizdeki dosyaları açıp okuyan, "
-        "AST doğrulamalı kod yazan, renkli diff çıkaran ve 'Diske Yaz' dediğinizde fiilen kaynak kodları "
-        "atomik olarak güncelleyen gerçek yapay zeka mühendisi."
+        "Tek tek dosya seçmenize veya kod bilmenize gerek yok! Projenizde ne değiştirmek istediğinizi doğal dille yazın; "
+        "Yapay Zeka Mimarı tüm kod tabanını otonom tarar, ilgili tüm dosyaları tespit eder, AST doğrulamalı kod üretir ve "
+        "tek bir tıkla tüm projeye atomik olarak uygular."
     )
 
     # Üst Güvenlik ve Durum Rozetleri
     col_sw1, col_sw2, col_sw3, col_sw4 = st.columns(4)
     with col_sw1:
-        st.markdown('<span class="badge-green">🛡️ Sandbox Duvarı</span><br><small style="color:#94A3B8">Aktif (Proje İçi Sınırlı)</small>', unsafe_allow_html=True)
+        st.markdown('<span class="badge-green">🌐 Kapsam</span><br><small style="color:#94A3B8">Tüm Kod Tabanı (Codebase-Wide)</small>', unsafe_allow_html=True)
     with col_sw2:
-        st.markdown('<span class="badge-cyan">🧪 AST & py_compile</span><br><small style="color:#94A3B8">0 Sözdizimi Hatası Denetimi</small>', unsafe_allow_html=True)
+        st.markdown('<span class="badge-cyan">🧠 Otonom Tarama</span><br><small style="color:#94A3B8">AI Architect Dosya Keşfi</small>', unsafe_allow_html=True)
     with col_sw3:
-        st.markdown('<span class="badge-gold">💾 Atomik Snapshot</span><br><small style="color:#94A3B8">Yazım Öncesi Otomatik .bak</small>', unsafe_allow_html=True)
+        st.markdown('<span class="badge-gold">🧪 AST Denetimi</span><br><small style="color:#94A3B8">0 Sözdizimi Hatası Garantisi</small>', unsafe_allow_html=True)
     with col_sw4:
         backups_count = len(CodeSnapshotManager.list_snapshots())
-        st.markdown(f'<span class="badge-green">↩️ Rollback Kasası</span><br><small style="color:#94A3B8">{backups_count} Güvenli Yedek</small>', unsafe_allow_html=True)
+        st.markdown(f'<span class="badge-green">💾 Toplu Snapshot</span><br><small style="color:#94A3B8">{backups_count} Güvenli Yedek (.bak)</small>', unsafe_allow_html=True)
 
     st.markdown("<div style='margin-top: 14px;'></div>", unsafe_allow_html=True)
 
-    # Dosya Seçimi ve Bilgi Kartı
-    all_proj_files = CodeInspector.list_project_files()
-    col_file1, col_file2 = st.columns([2, 1])
-    with col_file1:
-        default_idx = all_proj_files.index("yonetici_masasi.py") if "yonetici_masasi.py" in all_proj_files else 0
-        target_file_selected = st.selectbox(
-            "Hedef Dosya Seçin (Üzerinde çalışılacak kaynak kod):",
-            options=all_proj_files,
-            index=default_idx,
-            help="SWE-Agent bu dosyayı okuyacak, analiz edecek ve verdiğiniz direktife göre güncelleyecektir."
-        )
-    with col_file2:
-        try:
-            _, total_f_lines = CodeInspector.read_workspace_file(target_file_selected)
-            abs_p = WorkspaceSecurity.validate_path(target_file_selected)
-            f_size_kb = round(os.path.getsize(abs_p) / 1024, 2)
-            st.info(f"📄 **Boyut:** {f_size_kb} KB | **Satır Sayısı:** {total_f_lines}\n\n🔒 **Güvenlik:** Doğrulandı")
-        except Exception as e:
-            st.error(f"Dosya okuma hatası: {e}")
+    # Hızlı Direktif Şablonları (Executive Prompt Chips)
+    st.markdown("##### 💡 Hızlı Yönetici Direktifleri (Tıklayıp Doldurun):")
+    col_chip1, col_chip2 = st.columns(2)
+    with col_chip1:
+        if st.button("🎨 'Arayüzü AI Slop renklerinden kurtar, Linear tarzı minimalist CSS yap'", use_container_width=True):
+            st.session_state.swe_quick_instruction = "Arayüzdeki AI Slop renkleri (fosforlu cyan, sarı, parlayan kırmızı kutu) sil, Linear.app koyu kömür minimalizmini ve rafine indigo temasını tüm sayfalara uygula."
+    with col_chip2:
+        if st.button("🛡️ 'Tüm projede güvenlik kontrollerini ve hata yakalamalarını artır'", use_container_width=True):
+            st.session_state.swe_quick_instruction = "Tüm kod tabanında hata yakalama (try/except) ve güvenlik sınırlarını güçlendir, eksik tip ipuçlarını tamamla."
 
     # Direktif Giriş Alanı
+    default_text = st.session_state.pop("swe_quick_instruction", "")
     swe_instruction = st.text_area(
-        "Mühendise Kodlama / Refactoring Direktifinizi Verin:",
-        placeholder="Örnek: Bu dosyadaki CSS kodlarını incele. AI Slop renkleri (fosforlu cyan, sarı, parlayan kırmızı kutu) kaldır ve Linear.app koyu kömür minimalizmini uygula.",
-        height=95,
-        help="Ajan bu talimatı inceleyecek, dosyayı okuyacak, AST denetimli kodu üretecek ve size diff çıkaracaktır."
+        "Şirketinizde veya projenizde ne değiştirmek istiyorsunuz? (Teknik detay bilmeniz gerekmez):",
+        value=default_text,
+        placeholder="Örnek: Arayüzdeki parlayan AI Slop renklerini kaldır, Linear.app minimalist kömür temasını ve rafine tipografiyi tüm arayüze uygula.",
+        height=100,
+        help="Siz sadece hedefinizi yazın. Mimar ajan hangi dosyaların etkileneceğini kendisi bulacak ve kodu hazırlayacaktır."
     )
 
+    # Çalıştırma Butonları
     col_btn_run, col_btn_clear = st.columns([3, 1])
     with col_btn_run:
-        btn_plan = st.button("🧠 Kodu Analiz Et & Diff Üret (SWE-Agent Çalıştır)", type="primary", use_container_width=True)
+        btn_run_codebase = st.button("🚀 Tüm Projeyi Otonom Tara, Planla & Kodla (Codebase-Wide)", type="primary", use_container_width=True)
     with col_btn_clear:
         if st.button("🧹 Temizle", use_container_width=True):
+            st.session_state.swe_codebase_patch = None
             st.session_state.swe_active_patch = None
             st.rerun()
 
-    if btn_plan:
+    # İsteğe Bağlı: Manuel Tek Dosya Modu (Gelişmiş)
+    with st.expander("⚙️ Gelişmiş: Belirli Bir Dosyaya Cerrahi Müdahale (Opsiyonel)", expanded=False):
+        st.caption("Eğer tüm projeyi değil sadece tek bir dosyayı hedeflemek isterseniz buradan seçebilirsiniz:")
+        all_proj_files = CodeInspector.list_project_files()
+        manual_target_file = st.selectbox("Cerrahi Dosya Seçimi:", options=["Otomatik Tespit (Tavsiye Edilen)"] + all_proj_files)
+
+    if btn_run_codebase:
         if not swe_instruction.strip():
-            st.warning("Lütfen mühendise ne yapması gerektiğini anlatan bir direktif yazın.")
+            st.warning("Lütfen gerçekleştirmek istediğiniz hedefi yukarıdaki kutuya yazın.")
         else:
-            with st.spinner("🤖 SWE-Agent dosyayı inceliyor, AST sözdizimi doğrulamalı kodu üretiyor..."):
+            with st.spinner("🤖 Baş Yazılım Mimarı tüm proje kod tabanını tarıyor, ilgili dosyaları tespit ediyor ve AST doğrulamalı kod üretiyor..."):
                 try:
-                    patch_result = plan_and_generate_code_patch(
+                    specific_list = [manual_target_file] if manual_target_file != "Otomatik Tespit (Tavsiye Edilen)" else None
+                    codebase_result = plan_and_generate_codebase_patch(
                         instruction=swe_instruction,
-                        target_file=target_file_selected
+                        specific_files=specific_list
                     )
-                    st.session_state.swe_active_patch = patch_result
+                    st.session_state.swe_codebase_patch = codebase_result
                     st.rerun()
                 except Exception as e:
-                    st.error(f"SWE-Agent çalıştırma hatası: {e}")
+                    st.error(f"Otonom kodlama hatası: {e}")
 
-    # DİFF VE HUMAN-IN-THE-LOOP ONAY KARTI
-    active_patch = st.session_state.get("swe_active_patch")
-    if active_patch:
+    # ==============================================================================
+    # ÇOKLU DOSYA DİFF VE HUMAN-IN-THE-LOOP PROJE ONAY PANOSU
+    # ==============================================================================
+    cb_patch = st.session_state.get("swe_codebase_patch")
+    if cb_patch:
         st.markdown("---")
-        st.markdown("### 🔍 Kod Değişikliği Önizleme & Onay Masası")
+        st.markdown("### 📋 Baş Mimarın Proje Değişiklik Raporu & Onay Masası")
 
-        if active_patch["syntax_valid"]:
-            st.success(
-                f"✅ **AST Sözdizimi Testi: GEÇTİ (0 HATA)** | "
-                f"**Hedef:** `{active_patch['target_file']}` | "
-                f"**Deneme:** {active_patch.get('iterations_taken', 0)} iterasyon"
+        # Mimari Plan ve Etki Kartı
+        col_plan1, col_plan2 = st.columns([2, 1])
+        with col_plan1:
+            st.info(f"🧠 **Mimari Plan:**\n{cb_patch['architectural_plan']}")
+        with col_plan2:
+            st.markdown(
+                f"""<div style="background-color:#1E293B; padding:16px; border-radius:8px; border:1px solid #334155;">
+                <span style="font-size:12px; color:#94A3B8;">Etki Değerlendirmesi</span><br>
+                <b style="color:#F59E0B; font-size:14px;">{cb_patch['estimated_impact']}</b><br><br>
+                <span style="font-size:12px; color:#94A3B8;">Etkilenen Dosya Sayısı</span><br>
+                <b style="color:#38BDF8; font-size:16px;">{cb_patch['total_files']} Adet Proje Dosyası</b>
+                </div>""",
+                unsafe_allow_html=True
             )
-        else:
-            st.error(f"❌ **Sözdizimi Hatası:** {active_patch.get('syntax_error')}")
 
-        st.markdown(f"**📌 Mühendisin Değişiklik Özeti:**\n{active_patch['summary']}")
+        st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+        st.markdown(f"##### 🎯 Otonom Olarak Belirlenen ve Düzenlenen Dosyalar ({cb_patch['total_files']} Adet):")
 
-        # Diff Görüntüleyici
-        diff_text = active_patch.get("diff", "")
-        if diff_text:
-            st.markdown("##### 📄 Renkli Unified Diff (Eski vs Yeni):")
-            st.code(diff_text, language="diff")
-        else:
-            st.info("Dosyada bir değişiklik tespit edilmedi veya önerilen kod mevcut kodla aynı.")
+        # Her dosya için ayrı bir sekmede Diff göster
+        file_patches = cb_patch.get("file_patches", [])
+        if file_patches:
+            tab_labels = [f"📄 {p['target_file']}" for p in file_patches]
+            diff_tabs = st.tabs(tab_labels)
 
-        # Onay ve İcra Butonları
-        col_exec1, col_exec2, col_exec3 = st.columns([2, 1, 1])
-        with col_exec1:
-            if st.button("🚀 Onayla & Diske Yaz (Apply to Disk)", type="primary", use_container_width=True, disabled=not active_patch["syntax_valid"]):
-                with st.spinner("💾 Otomatik .bak yedeği alınıyor ve dosya atomik olarak diske yazılıyor..."):
+            for i, p in enumerate(file_patches):
+                with diff_tabs[i]:
+                    if p.get("syntax_valid"):
+                        st.success(f"✅ **AST Sözdizimi Testi: GEÇTİ (0 Hata)** | Dosya: `{p['target_file']}`")
+                    else:
+                        st.error(f"❌ **Sözdizimi Hatası:** {p.get('syntax_error')}")
+
+                    st.markdown(f"**📌 Dosya Özeti:** {p.get('summary', 'Değişiklik yapıldı.')}")
+
+                    diff_str = p.get("diff", "")
+                    if diff_str:
+                        st.code(diff_str, language="diff")
+                    else:
+                        st.info("Bu dosyada önerilen değişiklik bulunmuyor.")
+
+        # Toplu Onay ve İcra Butonları
+        st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
+        col_exec_all, col_reject_all, col_roll_all = st.columns([2, 1, 1])
+
+        with col_exec_all:
+            all_valid = cb_patch.get("success", False)
+            if st.button("🚀 Tüm Değişiklikleri Projeye Uygula (1-Tıkla Canlıya Al)", type="primary", use_container_width=True, disabled=not all_valid):
+                with st.spinner("💾 Toplu zaman damgalı snapshot alınıyor ve tüm dosyalar atomik olarak güncelleniyor..."):
                     try:
-                        res = execute_approved_code_patch(
-                            target_file=active_patch["target_file"],
-                            new_content=active_patch["proposed_content"]
-                        )
-                        st.session_state.swe_last_backup = res.get("backup_path")
-                        st.session_state.swe_active_patch = None
-                        st.success(f"🎉 **BAŞARILI!** Kod diske yazıldı. Otomatik yedek: `{os.path.basename(res['backup_path']) if res.get('backup_path') else 'Yok'}`")
+                        exec_res = execute_approved_codebase_patch(cb_patch)
+                        st.session_state.swe_last_batch_id = exec_res["batch_id"]
+                        st.session_state.swe_codebase_patch = None
+                        st.success(f"🎉 **PROJE GÜNCELLENDİ!** {len(exec_res['written_files'])} dosya diske yazıldı. Toplu Snapshot ID: `{exec_res['batch_id']}`")
                         st.balloons()
                         st.rerun()
                     except Exception as e:
-                        st.error(f"Diske yazma hatası: {e}")
+                        st.error(f"Uygulama hatası: {e}")
 
-        with col_exec2:
-            if st.button("❌ Değişikliği Reddet", use_container_width=True):
-                st.session_state.swe_active_patch = None
-                st.info("Önerilen kod değişikliği iptal edildi.")
+        with col_reject_all:
+            if st.button("❌ İptal Et / Reddet", use_container_width=True):
+                st.session_state.swe_codebase_patch = None
+                st.info("Önerilen proje değişikliği iptal edildi.")
                 st.rerun()
 
-        with col_exec3:
-            if st.button("↩️ Son Yedeğe Dön (Rollback)", use_container_width=True):
+        with col_roll_all:
+            last_batch = st.session_state.get("swe_last_batch_id")
+            if st.button("↩️ Son Toplu Değişikliği Geri Al (Rollback)", use_container_width=True, disabled=not last_batch):
                 try:
-                    rollback_code_change(active_patch["target_file"])
-                    st.success(f"✅ `{active_patch['target_file']}` son yedeğe başarıyla geri döndürüldü!")
+                    restored = rollback_codebase_batch(last_batch)
+                    st.success(f"✅ Son toplu değişiklik geri alındı! Eski haline dönen dosyalar: {restored}")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Rollback hatası: {e}")
+                    st.error(f"Geri alma hatası: {e}")
 
     # Geçmiş Yedekler Gezgini
     st.markdown("---")
@@ -709,10 +743,14 @@ with tab_swe:
                 with col_s2:
                     if st.button("Geri Yükle", key=f"btn_res_{s['filename']}"):
                         try:
-                            # Dosya adından hedefi çıkar (YYYYMMDD_HHMMSS_filename.bak -> filename)
-                            raw_name = "_".join(s["filename"].split("_")[2:]).replace(".bak", "")
-                            CodeSnapshotManager.restore_snapshot(s["path"], raw_name)
-                            st.success(f"✅ '{raw_name}' başarıyla bu yedeğe geri döndürüldü!")
+                            # Dosya adından hedefi çıkar
+                            parts = s["filename"].split("___")
+                            if len(parts) >= 2:
+                                rel_name = parts[1][:-4].replace("__", os.sep)
+                            else:
+                                rel_name = "_".join(s["filename"].split("_")[2:]).replace(".bak", "")
+                            CodeSnapshotManager.restore_snapshot(s["path"], rel_name)
+                            st.success(f"✅ '{rel_name}' başarıyla bu yedeğe geri döndürüldü!")
                             st.rerun()
                         except Exception as e:
                             st.error(f"Geri yükleme hatası: {e}")
@@ -918,6 +956,32 @@ with tab_reports:
         )
     else:
         st.info("Yazılım mimarisi henüz kod üretmedi. CEO görevlendirme yaptığında kaynak kod burada görüntülenecektir.")
+
+    st.markdown("---")
+    
+    # 4. Kurumsal Sistem Mimarisi & Teknik Whitepaper (PDF Rapor)
+    st.markdown("""
+    <div class="report-card">
+        <h4 style="color:#38BDF8; margin-top:0;">📖 4. Kurumsal Sistem Mimarisi & Teknik Whitepaper (Resmi PDF)</h4>
+        <span class="badge-gold">Tam Sistem Dökümantasyonu • Kodlar • Şemalar • Kalıcılık</span>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("Tüm otonom şirketin uçtan uca mimarisini, LangGraph akışlarını, SQLite kalıcılık modelini ve güvenlik kurallarını içeren resmi A4 PDF dokümanını tek tıkla indirebilirsiniz:")
+    try:
+        from pdf_olusturucu import generate_enterprise_documentation_pdf
+        pdf_bytes_main = generate_enterprise_documentation_pdf()
+        st.download_button(
+            label="📥 Tüm Sistem Dökümantasyonunu PDF Olarak İndir (.pdf)",
+            data=pdf_bytes_main,
+            file_name="Otonom_Ajan_Sirketi_Mimari_Whitepaper.pdf",
+            mime="application/pdf",
+            type="primary",
+            use_container_width=True,
+            help="Tüm sistem mimarisini ve kodları A4 formatında kurumsal PDF olarak indirir."
+        )
+    except Exception as e:
+        st.caption(f"PDF motoru: {str(e)[:40]}")
 
 # ------------------------------------------------------------------------------
 # TAB 3: VERİTABANI & GEÇMİŞ DENETİMİ (SQLITE VISUALIZER)

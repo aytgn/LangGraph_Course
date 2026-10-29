@@ -18,3 +18,5 @@ pydantic>=2.8.0
 rich>=13.8.0
 streamlit>=1.40.0
 pandas>=2.0.0
+fpdf2>=2.8.0
+fonttools>=4.34.0

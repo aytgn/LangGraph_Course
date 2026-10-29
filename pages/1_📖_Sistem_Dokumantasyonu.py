@@ -15,6 +15,11 @@ import pandas as pd
 import streamlit as st
 from datetime import datetime
 
+# PDF Üretici Modülü
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.abspath(os.path.join(current_dir, "..")))
+from pdf_olusturucu import generate_enterprise_documentation_pdf
+
 # Sayfa Yapılandırması
 st.set_page_config(
     page_title="Sistem Dökümantasyonu & Mimari Rehber",
@@ -91,10 +96,26 @@ with st.sidebar:
     - **4. Güvenlik & HITL Bütçe Kilidi**
     - **5. SQLite Veritabanı Şeması**
     - **6. Meta-Düzlem & İkinci Beyin (Second Brain)**
+    - **7. Otonom Kodlayıcı (SWE-Agent) Mimarisi**
     """)
     
     st.markdown("---")
-    st.caption("Versiyon: v3.5 Enterprise\nMotor: LangGraph + SQLite + Meta-Layer")
+    st.markdown("##### 📥 Resmi Rapor İndir")
+    try:
+        pdf_data_sb = generate_enterprise_documentation_pdf()
+        st.download_button(
+            label="📥 Tüm Dökümanı PDF İndir (.pdf)",
+            data=pdf_data_sb,
+            file_name="Otonom_Ajan_Sirketi_Mimari_Whitepaper.pdf",
+            mime="application/pdf",
+            type="primary",
+            use_container_width=True,
+            help="Tüm sistem mimarisini ve kodları A4 formatında kurumsal PDF olarak indirir."
+        )
+    except Exception as e:
+        st.caption(f"PDF motoru: {str(e)[:30]}")
+        
+    st.caption("Versiyon: v3.8 Enterprise SWE\nMotor: LangGraph + SQLite + SWE-Agent")
 
 # Ana Başlık
 st.markdown("""
@@ -103,7 +124,7 @@ st.markdown("""
         <div>
             <h1 style="margin:0; font-size: 26px; color: #F8FAFC;">📖 OTONOM AJAN ŞİRKETİ | SİSTEM DÖKÜMANTASYONU</h1>
             <p style="margin: 4px 0 0 0; color: #94A3B8; font-size: 14px;">
-                Mühendislik Standartları • Supervisor Orkestrasyonu • SQLite Kalıcılığı • Meta-Düzlem & İkinci Beyin
+                Mühendislik Standartları • Supervisor Orkestrasyonu • SQLite Kalıcılığı • Otonom SWE-Agent
             </p>
         </div>
         <div>
@@ -114,13 +135,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Sekmeler
-tab_quick, tab_arch, tab_code, tab_security, tab_db, tab_meta_doc = st.tabs([
+tab_quick, tab_arch, tab_code, tab_security, tab_db, tab_meta_doc, tab_swe_doc = st.tabs([
     "⚡ 1. Hızlı Kullanım Özeti (Executive Cheatsheet)",
     "🏗️ 2. Uçtan Uca Mimari & LangGraph Akışı",
     "💻 3. Çekirdek Kod Katmanı",
     "🛑 4. Güvenlik, HITL & API Key Rotasyonu",
     "🗄️ 5. SQLite Veritabanı Şeması",
-    "🏛️ 6. Meta-Düzlem & İkinci Beyin (Second Brain)"
+    "🏛️ 6. Meta-Düzlem & İkinci Beyin (Second Brain)",
+    "🛠️ 7. Otonom Kodlayıcı (SWE-Agent)"
 ])
 
 # ==============================================================================
@@ -174,15 +196,28 @@ with tab_quick:
     ]
     st.dataframe(pd.DataFrame(faq_data), use_container_width=True, hide_index=True)
 
-    # İndirme Butonu
+    # İndirme Butonları (PDF & Markdown)
     st.markdown("---")
-    st.download_button(
-        label="📥 Tüm Teknik Kılavuzu Markdown Olarak İndir (.md)",
-        data="""# Otonom Ajan Şirketi - Kapsamlı Yönetici Kılavuzu\nBu dosya projenin teknik mimarisini, kodlarını ve kullanım yönergelerini içerir.""",
-        file_name="otonom_sirket_kilavuzu.md",
-        mime="text/markdown",
-        use_container_width=True
-    )
+    st.markdown("##### 📥 Kapsamlı Dokümanı Bilgisayarınıza İndirin:")
+    col_dl1, col_dl2 = st.columns(2)
+    with col_dl1:
+        st.download_button(
+            label="📥 Tüm Dökümanı Kurumsal PDF Olarak İndir (.pdf)",
+            data=generate_enterprise_documentation_pdf(),
+            file_name="Otonom_Ajan_Sirketi_Mimari_Whitepaper.pdf",
+            mime="application/pdf",
+            type="primary",
+            use_container_width=True,
+            help="Tüm sistem mimarisini ve kodları A4 formatında kurumsal PDF olarak indirir."
+        )
+    with col_dl2:
+        st.download_button(
+            label="📄 Dökümanı Markdown Olarak İndir (.md)",
+            data="""# Otonom Ajan Şirketi - Kapsamlı Yönetici Kılavuzu\nBu dosya projenin teknik mimarisini, kodlarını ve kullanım yönergelerini içerir.""",
+            file_name="otonom_sirket_kilavuzu.md",
+            mime="text/markdown",
+            use_container_width=True
+        )
 
 # ==============================================================================
 # TAB 2: UÇTAN UCA MİMARİ & LANGGRAPH AKIŞI
@@ -401,4 +436,36 @@ with tab_meta_doc:
     #### 3. Stratejik Direktif Köprüsü (`direktif_koprusu.py`):
     Kurucular Odası'nda saatlerce süren serbest ve felsefi bir tartışma bittiğinde, tek bir tıkla (`🚀 Operasyona Aktar`)
     Chief of Staff tartışmayı operasyonel bir brife dönüştürür ve CEO masasına otomatik olarak enjekte eder.
+    """)
+
+# ==============================================================================
+# TAB 7: OTONOM KODLAYICI (SWE-AGENT) MİMARİSİ
+# ==============================================================================
+with tab_swe_doc:
+    st.markdown("### 🛠️ Otonom Yazılım Mühendisi (SWE-Agent) Mimarisi")
+    st.caption("Devin, Aider ve Claude Engineer standartlarında; dosya okuyan, kod yazan, diff çıkaran ve diske atomik yazan motor")
+
+    st.markdown("""
+    Geleneksel chatbot'lar yalnızca havada uçuşan metinler üretirken; **SWE-Agent Motorumuz (`meta_katman/otonom_kodlayici.py`)** 
+    proje dizinindeki gerçek Python, CSS, HTML ve Markdown dosyalarını okur, değişiklikleri üretir ve sözdizimi onaylandığında diske yazar.
+
+    #### 1. Güvenlik ve AST Doğrulama Standartları (`meta_katman/kod_araclari.py`):
+    - **🛡️ Sandbox Duvarı:** Ajan yalnızca `LangGraph_Course` kök dizininde çalışabilir. Dizin dışına çıkamaz (`../`), `.env` ve `.git` gibi hassas dosyaları değiştiremez.
+    - **🧪 AST ve Derleme Denetimi:** Üretilen her kod parçası diske yazılmadan önce `ast.parse` ve `py_compile` ile denetlenir. 0 sözdizimi hatası garanti edilir.
+    - **🔄 Kendi Kendini Onarma (Self-Healing Loop):** Bir derleme hatası olursa süreç durmaz; traceback hata detayları ajana geri beslenerek kodu kendi kendine düzeltir (3 iterasyona kadar).
+    - **💾 Atomik Yazma & Snapshot:** Her dosya yazımından önce `meta_bellek/.backups/` altına zaman damgalı `.bak` yedeği alınır. İşlem `.tmp` dosyası üzerinden atomik gerçekleştirilir.
+    - **↩️ Anında Rollback:** Beğenilmeyen veya geri alınmak istenen herhangi bir değişiklik tek tıkla eski yedeğine döndürülebilir.
+
+    #### 2. SWE-Agent LangGraph Akışı:
+    1. **`analyze_node`:** Hedef dosyayı okur (`yonetici_masasi.py`, vb.) ve mevcut içeriği belleğe alır.
+    2. **`generate_patch_node`:** Kullanıcı direktifine (`instruction`) göre eksiksiz, çalışan tam yeni kodu üretir.
+    3. **`verify_syntax_node`:** Kodun sözdizimini test eder ve satır satır renkli Unified Diff üretir.
+    4. **`Human-in-the-Loop Onayı`:** Yönetici Masasında diff incelenir ve *"🚀 Onayla & Diske Yaz"* dendiğinde dosya canlı olarak güncellenir.
+
+    #### 3. Tüm Kod Tabanı Otonom Modu (Codebase-Wide Auto-Refactor):
+    Kullanıcının tek tek dosya seçmesine veya kodlama bilmesine gerek yoktur.
+    Yönetici sadece *"Arayüzü AI Slop'tan kurtar, Linear tarzı yap"* gibi bir doğal dil emri verdiğinde:
+    - **AI Mimar (`discover_relevant_files_for_task`)** tüm kod tabanını otonom tarar.
+    - Etkilenecek tüm dosyaları (örn: `yonetici_masasi.py`, dokümantasyon sayfaları) kendi kendine tespit eder.
+    - Her dosya için AST doğrulamalı kod üretir ve toplu snapshot alarak tek tıkla canlıya geçirir.
     """)

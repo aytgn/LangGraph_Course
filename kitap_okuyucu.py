@@ -1,10 +1,14 @@
 """
 ================================================================================
-📖 ZİNCİRLERDEN OTONOM ŞİRKETLERE: LANGGRAPH E-KİTAP STÜDYOSU (VIBE READER) 📖
+📖 ZİNCİRLERDEN OTONOM ŞİRKETLERE: LANGGRAPH E-KİTAP DERLEYİCİ & OKUYUCU 📖
 ================================================================================
-Karanlık temalı, sayfa sayfa (bölüm bölüm) okunabilen, şema destekli,
-arama ve kişisel bölüm notu özellikli modern Web E-Kitap Okuyucu & PDF Sunucusu.
-Temiz URL: http://kitap.lvh.me
+Sunucusuz (Zero-Daemon), karanlık temalı, sayfa sayfa (bölüm bölüm) okunabilen,
+Mermaid şema destekli, arama ve tarayıcı hafızalı (localStorage + JSON yedek)
+modern Web E-Kitap üreticisi.
+
+Kullanım:
+  python kitap_okuyucu.py --build   -> LANGGRAPH_E_KITAP.html üretir ve çıkar (Daemon yok)
+  python kitap_okuyucu.py --open    -> Üretir, tarayıcıda açar ve anında çıkar (Daemon yok)
 ================================================================================
 """
 
@@ -13,6 +17,7 @@ import re
 import sys
 import json
 import socket
+import webbrowser
 import urllib.parse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
@@ -22,6 +27,7 @@ if hasattr(sys.stdout, "reconfigure"):
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 BOOK_MD_PATH = os.path.join(ROOT_DIR, "LANGGRAPH_VE_OTONOM_AJANLAR_KITABI.md")
 BOOK_PDF_PATH = os.path.join(ROOT_DIR, "LANGGRAPH_VE_OTONOM_AJANLAR_KITABI.pdf")
+STATIC_HTML_PATH = os.path.join(ROOT_DIR, "LANGGRAPH_E_KITAP.html")
 NOTES_JSON_PATH = os.path.join(ROOT_DIR, "kitap_notlarim.json")
 
 
@@ -41,6 +47,7 @@ def parse_book_into_chapters(md_text: str) -> list[dict]:
     chapter_pattern = re.compile(r"^##\s+(Önsöz:.*|Bölüm\s+\d+:.*|Ek\s+\d+:.*)$")
 
     started_chapters = False
+    prev_part = current_part
 
     for line in lines:
         p_match = part_pattern.match(line.strip())
@@ -54,7 +61,6 @@ def parse_book_into_chapters(md_text: str) -> list[dict]:
             header_text = c_match.group(1).strip()
             if started_chapters and current_lines:
                 content_str = "\n".join(current_lines).strip()
-                # Sondaki yatay çizgileri temizle
                 content_str = re.sub(r"(\n---\s*)+$", "", content_str).strip()
                 word_count = len(content_str.split())
                 chapters.append({
@@ -74,7 +80,6 @@ def parse_book_into_chapters(md_text: str) -> list[dict]:
         else:
             if not started_chapters:
                 prev_part = current_part
-            # İçindekiler bloğunu web okuyucuda sol menü zaten karşıladığı için kapakta sade tut
             current_lines.append(line)
 
     if current_lines:
@@ -105,29 +110,21 @@ def clean_markdown_links(md_text: str) -> str:
         label = match.group(1)
         url = match.group(2)
         if url.startswith("file:///"):
-            fname = url.split("/")[-1]
             return f"`📂 {label}`"
         return match.group(0)
     return re.sub(r"\[([^\]]+)\]\(([^)]+)\)", repl, md_text)
 
 
-def load_book_notes() -> dict:
-    if os.path.exists(NOTES_JSON_PATH):
-        try:
-            with open(NOTES_JSON_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {}
-
-
-def save_book_notes(data: dict):
-    with open(NOTES_JSON_PATH, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+def get_chapters_json_str() -> str:
+    with open(BOOK_MD_PATH, "r", encoding="utf-8") as f:
+        raw_md = clean_markdown_links(f.read())
+    chapters = parse_book_into_chapters(raw_md)
+    # </script> çakışmasını önlemek için güvenli kaçış
+    return json.dumps(chapters, ensure_ascii=False).replace("</", "<\\/")
 
 
 # ==============================================================================
-# KARANLIK TEMALI İNTERAKTİF WEB KİTAP OKUYUCU ŞABLONU
+# KARANLIK TEMALI SUNUCUSUZ (SERVERLESS) WEB KİTAP OKUYUCU ŞABLONU
 # ==============================================================================
 READER_HTML = r"""<!DOCTYPE html>
 <html lang="tr" class="dark">
@@ -321,6 +318,10 @@ READER_HTML = r"""<!DOCTYPE html>
 
     <!-- Sağ Kontroller -->
     <div class="flex items-center gap-2 md:gap-3">
+      <a id="cockpit-back-btn" href="/" target="_top" class="hidden px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/15 text-slate-200 text-xs font-semibold transition items-center gap-1.5">
+        <span>👑</span> <span class="hidden lg:inline">Yönetici Kokpiti</span>
+      </a>
+
       <span id="read-badge" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-white/10 text-xs text-slate-300 font-mono">
         ⏱️ ~5 dk okuma
       </span>
@@ -338,7 +339,7 @@ READER_HTML = r"""<!DOCTYPE html>
       </button>
 
       <!-- PDF İndir Butonu -->
-      <a href="/pdf" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 text-xs font-extrabold transition shadow-lg shadow-emerald-500/20 flex items-center gap-1.5">
+      <a id="pdf-download-btn" href="__PDF_HREF__" download="LangGraph_ve_Otonom_Ajanlar_Kitabi.pdf" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 text-xs font-extrabold transition shadow-lg shadow-emerald-500/20 flex items-center gap-1.5">
         <span>📥</span> <span>PDF İndir</span>
       </a>
     </div>
@@ -412,12 +413,21 @@ READER_HTML = r"""<!DOCTYPE html>
         <button onclick="toggleNotesDrawer()" class="text-slate-400 hover:text-white text-sm">✕</button>
       </div>
       <p id="notes-chapter-label" class="text-xs text-slate-400 mb-3 truncate"></p>
-      <textarea id="chapter-note-input" class="flex-1 w-full bg-slate-900 border border-white/10 rounded-xl p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-amber-500 resize-none" placeholder="Bu bölümde aklınıza gelen fikirleri, şirket senaryolarınızı veya sorularınızı buraya not alın..."></textarea>
+      <textarea id="chapter-note-input" oninput="autoSaveNote()" class="flex-1 w-full bg-slate-900 border border-white/10 rounded-xl p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-amber-500 resize-none" placeholder="Bu bölümde aklınıza gelen fikirleri, şirket senaryolarınızı veya sorularınızı buraya not alın..."></textarea>
       <div class="mt-3 flex items-center justify-between">
-        <span id="note-save-msg" class="text-[11px] text-slate-500">Diske kalıcı kaydedilir</span>
+        <span id="note-save-msg" class="text-[11px] text-slate-500">Tarayıcı hafızasında kalıcıdır</span>
         <button onclick="saveCurrentNote()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition">
           💾 Kaydet
         </button>
+      </div>
+      <div class="mt-3 pt-3 border-t border-white/10 flex items-center justify-between gap-2">
+        <button onclick="exportNotesJson()" class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-white/10 text-[11px] text-slate-300 font-semibold transition">
+          📥 Yedek İndir (.json)
+        </button>
+        <label class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-white/10 text-[11px] text-slate-300 font-semibold transition text-center cursor-pointer">
+          📤 Yedek Yükle
+          <input type="file" accept=".json" onchange="importNotesJson(event)" class="hidden">
+        </label>
       </div>
     </aside>
 
@@ -425,12 +435,40 @@ READER_HTML = r"""<!DOCTYPE html>
 
   <script>
     const CHAPTERS = __CHAPTERS_JSON__;
-    let currentIdx = parseInt(localStorage.getItem('lg_book_chapter') || '0', 10);
+    const PDF_BASE64 = "__PDF_BASE64__";
+    const COCKPIT_URL = "__COCKPIT_URL__";
+
+    function safeGetStorage(key, fallback) {
+      try {
+        const val = localStorage.getItem(key);
+        return val !== null ? val : fallback;
+      } catch (e) {
+        return fallback;
+      }
+    }
+
+    function safeSetStorage(key, val) {
+      try {
+        localStorage.setItem(key, val);
+      } catch (e) {}
+    }
+
+    let currentIdx = parseInt(safeGetStorage('lg_book_chapter', '0'), 10);
     if (isNaN(currentIdx) || currentIdx < 0 || currentIdx >= CHAPTERS.length) currentIdx = 0;
 
-    let completedSet = new Set(JSON.parse(localStorage.getItem('lg_book_completed') || '[]'));
+    let completedSet = new Set();
+    try {
+      completedSet = new Set(JSON.parse(safeGetStorage('lg_book_completed', '[]')));
+    } catch (e) {}
+
     let bookNotes = {};
-    let fontSize = parseInt(localStorage.getItem('lg_book_fontsize') || '18', 10);
+    try {
+      bookNotes = JSON.parse(safeGetStorage('lg_book_notes', '{}')) || {};
+    } catch (e) {
+      bookNotes = {};
+    }
+
+    let fontSize = parseInt(safeGetStorage('lg_book_fontsize', '18'), 10);
     document.documentElement.style.setProperty('--reader-font-size', fontSize + 'px');
 
     mermaid.initialize({
@@ -460,7 +498,7 @@ READER_HTML = r"""<!DOCTYPE html>
 
     async function renderChapter(idx) {
       currentIdx = idx;
-      localStorage.setItem('lg_book_chapter', String(idx));
+      safeSetStorage('lg_book_chapter', String(idx));
       const ch = CHAPTERS[idx];
 
       document.getElementById('chapter-part-badge').textContent = ch.part;
@@ -470,10 +508,8 @@ READER_HTML = r"""<!DOCTYPE html>
       document.getElementById('completed-label').textContent = `${completedSet.size} tamamlandı`;
       document.getElementById('top-progress').style.width = `${((idx + 1) / CHAPTERS.length) * 100}%`;
 
-      // Markdown -> HTML (Mermaid bloklarını koruyarak)
       const mermaidBlocks = [];
       let md = ch.markdown;
-      // İlk sayfada uzun İçindekiler listesini gizle (sol menüde zaten interaktif var)
       if (idx === 0) {
         md = md.replace(/## 📑 İçindekiler[\s\S]*?---\n/, '');
       }
@@ -496,10 +532,8 @@ READER_HTML = r"""<!DOCTYPE html>
       const container = document.getElementById('chapter-content');
       container.innerHTML = html;
 
-      // Kod renklendirme
       container.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
 
-      // Mermaid çizimi
       const mNodes = container.querySelectorAll('.mermaid');
       if (mNodes.length > 0) {
         try {
@@ -509,7 +543,6 @@ READER_HTML = r"""<!DOCTYPE html>
         }
       }
 
-      // Önceki / Sonraki butonları
       const btnPrev = document.getElementById('btn-prev');
       const btnNext = document.getElementById('btn-next');
       if (idx > 0) {
@@ -532,7 +565,6 @@ READER_HTML = r"""<!DOCTYPE html>
         document.getElementById('next-title').textContent = 'Kitap Sonu 🎉';
       }
 
-      // Tamamlandı butonu durumu
       const btnComp = document.getElementById('btn-complete');
       if (completedSet.has(idx)) {
         btnComp.innerHTML = '<span>✅</span> <span>Tamamlandı (Geri Almak İçin Tıkla)</span>';
@@ -540,7 +572,6 @@ READER_HTML = r"""<!DOCTYPE html>
         btnComp.innerHTML = '<span>✓</span> <span>Bu Bölümü Tamamladım Olarak İşaretle</span>';
       }
 
-      // Not alanı güncelle
       document.getElementById('notes-chapter-label').textContent = ch.short_title;
       document.getElementById('chapter-note-input').value = bookNotes[String(idx)] || '';
 
@@ -601,14 +632,14 @@ READER_HTML = r"""<!DOCTYPE html>
       } else {
         completedSet.add(currentIdx);
       }
-      localStorage.setItem('lg_book_completed', JSON.stringify(Array.from(completedSet)));
+      safeSetStorage('lg_book_completed', JSON.stringify(Array.from(completedSet)));
       renderChapter(currentIdx);
     }
 
     function changeFontSize(delta) {
       if (delta === 0) fontSize = 18;
       else fontSize = Math.min(24, Math.max(14, fontSize + delta));
-      localStorage.setItem('lg_book_fontsize', String(fontSize));
+      safeSetStorage('lg_book_fontsize', String(fontSize));
       document.documentElement.style.setProperty('--reader-font-size', fontSize + 'px');
     }
 
@@ -622,33 +653,55 @@ READER_HTML = r"""<!DOCTYPE html>
       dr.classList.toggle('flex');
     }
 
-    async function loadNotesFromServer() {
-      try {
-        const res = await fetch('/api/notes');
-        bookNotes = await res.json();
-        document.getElementById('chapter-note-input').value = bookNotes[String(currentIdx)] || '';
-      } catch (e) {}
-    }
-
-    async function saveCurrentNote() {
+    function autoSaveNote() {
       bookNotes[String(currentIdx)] = document.getElementById('chapter-note-input').value;
-      try {
-        await fetch('/api/notes', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(bookNotes)
-        });
-        const msg = document.getElementById('note-save-msg');
-        msg.textContent = '✔ Kaydedildi!';
-        msg.className = 'text-[11px] text-emerald-400 font-semibold';
-        setTimeout(() => {
-          msg.textContent = 'Diske kalıcı kaydedilir';
-          msg.className = 'text-[11px] text-slate-500';
-        }, 2500);
-      } catch (e) {}
+      safeSetStorage('lg_book_notes', JSON.stringify(bookNotes));
     }
 
-    // Klavye kısayolları (Input odaklanmamışsa Sol / Sağ ok ile sayfa çevir)
+    function saveCurrentNote() {
+      autoSaveNote();
+      const msg = document.getElementById('note-save-msg');
+      msg.textContent = '✔ Tarayıcıya kaydedildi!';
+      msg.className = 'text-[11px] text-emerald-400 font-semibold';
+      setTimeout(() => {
+        msg.textContent = 'Tarayıcı hafızasında kalıcıdır';
+        msg.className = 'text-[11px] text-slate-500';
+      }, 2500);
+    }
+
+    function exportNotesJson() {
+      const dataStr = JSON.stringify(bookNotes, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'langgraph_kitap_notlarim.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function importNotesJson(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported && typeof imported === 'object') {
+            bookNotes = Object.assign({}, bookNotes, imported);
+            safeSetStorage('lg_book_notes', JSON.stringify(bookNotes));
+            document.getElementById('chapter-note-input').value = bookNotes[String(currentIdx)] || '';
+            saveCurrentNote();
+          }
+        } catch (err) {
+          alert('Geçersiz JSON not yedeği dosyası.');
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
     window.addEventListener('keydown', (e) => {
       if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
       if (e.key === 'ArrowRight') nextChapter();
@@ -656,7 +709,27 @@ READER_HTML = r"""<!DOCTYPE html>
     });
 
     window.addEventListener('DOMContentLoaded', async () => {
-      await loadNotesFromServer();
+      if (COCKPIT_URL) {
+        const backBtn = document.getElementById('cockpit-back-btn');
+        backBtn.href = COCKPIT_URL;
+        backBtn.classList.remove('hidden');
+        backBtn.classList.add('flex');
+      }
+
+      if (PDF_BASE64) {
+        try {
+          const bin = atob(PDF_BASE64);
+          const bytes = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          const blob = new Blob([bytes], { type: 'application/pdf' });
+          const blobUrl = URL.createObjectURL(blob);
+          const pdfBtn = document.getElementById('pdf-download-btn');
+          pdfBtn.href = blobUrl;
+        } catch (e) {
+          console.warn('PDF blob hazirlama uyarisi:', e);
+        }
+      }
+
       await renderChapter(currentIdx);
     });
   </script>
@@ -665,7 +738,7 @@ READER_HTML = r"""<!DOCTYPE html>
 """
 
 # ==============================================================================
-# YAYIN KALİTESİNDE PDF BASKI ŞABLONU (/print)
+# YAYIN KALİTESİNDE PDF BASKI ŞABLONU (/print - yalnızca isteğe bağlı PDF üretimi için)
 # ==============================================================================
 PRINT_HTML = r"""<!DOCTYPE html>
 <html lang="tr">
@@ -739,9 +812,7 @@ PRINT_HTML = r"""<!DOCTYPE html>
       display: flex;
       justify-content: space-between;
     }
-    .chapter-block {
-      page-break-before: always;
-    }
+    .chapter-block { page-break-before: always; }
     .part-kicker {
       font-family: 'Inter', sans-serif;
       font-size: 8.5pt;
@@ -763,18 +834,8 @@ PRINT_HTML = r"""<!DOCTYPE html>
       padding-bottom: 8px;
       border-bottom: 2px solid #e2e8f0;
     }
-    h3 {
-      font-size: 13pt;
-      font-weight: 700;
-      color: #0f766e;
-      margin-top: 20px;
-    }
-    h4 {
-      font-size: 11pt;
-      font-weight: 700;
-      color: #0369a1;
-      margin-top: 14px;
-    }
+    h3 { font-size: 13pt; font-weight: 700; color: #0f766e; margin-top: 20px; }
+    h4 { font-size: 11pt; font-weight: 700; color: #0369a1; margin-top: 14px; }
     p { margin: 0 0 10px 0; }
     code:not(pre code) {
       font-family: 'JetBrains Mono', monospace;
@@ -816,17 +877,8 @@ PRINT_HTML = r"""<!DOCTYPE html>
       font-size: 9pt;
       page-break-inside: avoid;
     }
-    th {
-      background: #0f172a;
-      color: #ffffff;
-      text-align: left;
-      padding: 8px 10px;
-    }
-    td {
-      border: 1px solid #cbd5e1;
-      padding: 7px 10px;
-      vertical-align: top;
-    }
+    th { background: #0f172a; color: #ffffff; text-align: left; padding: 8px 10px; }
+    td { border: 1px solid #cbd5e1; padding: 7px 10px; vertical-align: top; }
     tr:nth-child(even) td { background: #f8fafc; }
     .mermaid-print {
       border: 1px solid #e2e8f0;
@@ -837,11 +889,7 @@ PRINT_HTML = r"""<!DOCTYPE html>
       page-break-inside: avoid;
       background: #fcfdff;
     }
-    hr {
-      border: 0;
-      border-top: 1px solid #e2e8f0;
-      margin: 16px 0;
-    }
+    hr { border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0; }
   </style>
 </head>
 <body>
@@ -871,7 +919,6 @@ PRINT_HTML = r"""<!DOCTYPE html>
       CHAPTERS.forEach((ch, idx) => {
         let md = ch.markdown;
         if (idx === 0) {
-          // Başlık kapakta olduğu için ilk # satırını kaldır
           md = md.replace(/^# .*\n+/, '').replace(/^\*\*Alt Başlık:\*\*.*\n+/, '');
         }
         md = md.replace(/```mermaid\n([\s\S]*?)```/g, (_, code) => {
@@ -910,92 +957,69 @@ PRINT_HTML = r"""<!DOCTYPE html>
 """
 
 
-class BookReaderHandler(BaseHTTPRequestHandler):
+def render_standalone_ebook_html(
+    pdf_href: str = "./LANGGRAPH_VE_OTONOM_AJANLAR_KITABI.pdf",
+    pdf_base64: str = "",
+    cockpit_url: str = "",
+) -> str:
+    """
+    Hiçbir Python sunucusuna (daemon) ihtiyaç duymayan %100 bağımsız HTML üretir.
+    Hem statik LANGGRAPH_E_KITAP.html dosyası hem de Streamlit harici kitap sayfası
+    tarafından tek kaynak olarak kullanılır.
+    """
+    html = READER_HTML.replace("__CHAPTERS_JSON__", get_chapters_json_str())
+    html = html.replace("__PDF_HREF__", pdf_href)
+    html = html.replace("__PDF_BASE64__", pdf_base64)
+    html = html.replace("__COCKPIT_URL__", cockpit_url)
+    return html
+
+
+def build_static_ebook(output_path: str = STATIC_HTML_PATH) -> str:
+    """Statik sunucusuz e-kitap HTML dosyasını diske yazar ve yolunu döndürür."""
+    html = render_standalone_ebook_html(
+        pdf_href="./LANGGRAPH_VE_OTONOM_AJANLAR_KITABI.pdf",
+        pdf_base64="",
+        cockpit_url="",
+    )
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(html)
+    return output_path
+
+
+class PrintServerHandler(BaseHTTPRequestHandler):
+    """Yalnızca --print-server ile PDF yeniden üretmek istendiğinde geçici kullanılır."""
     def log_message(self, format, *args):
         return
 
-    def _get_chapters_json(self) -> str:
-        with open(BOOK_MD_PATH, "r", encoding="utf-8") as f:
-            raw_md = clean_markdown_links(f.read())
-        chapters = parse_book_into_chapters(raw_md)
-        return json.dumps(chapters, ensure_ascii=False)
-
     def do_GET(self):
         path = urllib.parse.urlparse(self.path).path
-
-        if path in ("/", "/index.html"):
-            html = READER_HTML.replace("__CHAPTERS_JSON__", self._get_chapters_json())
+        if path == "/print":
+            html = PRINT_HTML.replace("__CHAPTERS_JSON__", get_chapters_json_str())
             data = html.encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(data)))
             self.end_headers()
             self.wfile.write(data)
-
-        elif path == "/print":
-            html = PRINT_HTML.replace("__CHAPTERS_JSON__", self._get_chapters_json())
-            data = html.encode("utf-8")
+        else:
+            html = render_standalone_ebook_html().encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Content-Length", str(len(html)))
             self.end_headers()
-            self.wfile.write(data)
-
-        elif path == "/pdf":
-            if os.path.exists(BOOK_PDF_PATH):
-                with open(BOOK_PDF_PATH, "rb") as f:
-                    pdf_bytes = f.read()
-                self.send_response(200)
-                self.send_header("Content-Type", "application/pdf")
-                self.send_header("Content-Disposition", 'attachment; filename="LangGraph_ve_Otonom_Ajanlar_Kitabi.pdf"')
-                self.send_header("Content-Length", str(len(pdf_bytes)))
-                self.end_headers()
-                self.wfile.write(pdf_bytes)
-            else:
-                self.send_response(302)
-                self.send_header("Location", "/print")
-                self.end_headers()
-
-        elif path == "/api/notes":
-            payload = json.dumps(load_book_notes(), ensure_ascii=False).encode("utf-8")
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.end_headers()
-            self.wfile.write(payload)
-
-        else:
-            self.send_response(404)
-            self.end_headers()
-
-    def do_POST(self):
-        path = urllib.parse.urlparse(self.path).path
-        if path == "/api/notes":
-            length = int(self.headers.get("Content-Length", 0))
-            raw = self.rfile.read(length).decode("utf-8")
-            save_book_notes(json.loads(raw))
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(b'{"status":"ok"}')
-        else:
-            self.send_response(404)
-            self.end_headers()
-
-
-def find_best_port(preferred=80, fallback=8090) -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        if s.connect_ex(("127.0.0.1", preferred)) != 0:
-            return preferred
-    return fallback
+            self.wfile.write(html)
 
 
 if __name__ == "__main__":
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else find_best_port(80, 8090)
-    url = "http://kitap.lvh.me" if port == 80 else f"http://kitap.lvh.me:{port}"
-    server = ThreadingHTTPServer(("0.0.0.0", port), BookReaderHandler)
-    print("==================================================================")
-    print("  📖 LANGGRAPH E-KITAP OKUYUCU (VIBE READER) AKTIF!")
-    print(f"  👉 Kitap Adresi : {url}")
-    print(f"  📥 PDF İndir    : {url}/pdf")
-    print("==================================================================")
-    server.serve_forever()
+    args = set(sys.argv[1:])
+
+    if "--print-server" in args:
+        port = 8090
+        server = ThreadingHTTPServer(("127.0.0.1", port), PrintServerHandler)
+        print(f"Geçici PDF baskı şablon sunucusu: http://127.0.0.1:{port}/print")
+        server.serve_forever()
+    else:
+        out_file = build_static_ebook(STATIC_HTML_PATH)
+        print(f"✅ Sunucusuz E-Kitap başarıyla derlendi: {out_file}")
+        if "--open" in args:
+            webbrowser.open(f"file:///{out_file.replace(os.sep, '/')}")

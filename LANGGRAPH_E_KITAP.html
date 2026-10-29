@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zincirlerden Otonom Şirketlere — LangGraph Başucu Kitabı</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark-dimmed.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;0,7..72,700;1,7..72,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --reader-font-size: 18px;
+    }
+    body {
+      background-color: #090d16;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+    }
+    .book-prose {
+      font-family: 'Literata', Georgia, serif;
+      font-size: var(--reader-font-size);
+      line-height: 1.85;
+      color: #cbd5e1;
+    }
+    .book-prose h1 {
+      font-family: 'Inter', sans-serif;
+      font-size: 2.1em;
+      font-weight: 800;
+      line-height: 1.25;
+      color: #f8fafc;
+      margin-bottom: 0.75em;
+      letter-spacing: -0.02em;
+    }
+    .book-prose h2 {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.65em;
+      font-weight: 800;
+      line-height: 1.3;
+      color: #f8fafc;
+      margin-top: 0.4em;
+      margin-bottom: 0.8em;
+      padding-bottom: 0.45em;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .book-prose h3 {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.28em;
+      font-weight: 700;
+      color: #34d399;
+      margin-top: 1.9em;
+      margin-bottom: 0.65em;
+    }
+    .book-prose h4 {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.08em;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+    }
+    .book-prose p {
+      margin-bottom: 1.25em;
+    }
+    .book-prose strong {
+      color: #f1f5f9;
+      font-weight: 700;
+    }
+    .book-prose em {
+      color: #93c5fd;
+    }
+    .book-prose ul, .book-prose ol {
+      margin-bottom: 1.35em;
+      padding-left: 1.5em;
+    }
+    .book-prose ul { list-style-type: disc; }
+    .book-prose ol { list-style-type: decimal; }
+    .book-prose li {
+      margin-bottom: 0.55em;
+    }
+    .book-prose hr {
+      border: 0;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      margin: 2.2em 0;
+    }
+    .book-prose code:not(pre code) {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.84em;
+      background: rgba(15, 23, 42, 0.9);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.22);
+      padding: 0.15em 0.45em;
+      border-radius: 6px;
+    }
+    .book-prose pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82em;
+      line-height: 1.6;
+      background: #0d1321 !important;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 1.15em 1.3em;
+      overflow-x: auto;
+      margin: 1.5em 0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .book-prose blockquote {
+      border-left: 4px solid #38bdf8;
+      background: rgba(15, 23, 42, 0.65);
+      padding: 1em 1.35em;
+      border-radius: 0 14px 14px 0;
+      margin: 1.5em 0;
+      color: #e2e8f0;
+      font-style: italic;
+    }
+    .book-prose blockquote p:last-child { margin-bottom: 0; }
+    .book-prose table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin: 1.75em 0;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.86em;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .book-prose th {
+      background: rgba(30, 41, 59, 0.85);
+      color: #f8fafc;
+      font-weight: 700;
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .book-prose td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: rgba(15, 23, 42, 0.5);
+      color: #cbd5e1;
+      vertical-align: top;
+    }
+    .book-prose tr:last-child td { border-bottom: none; }
+    .mermaid-box {
+      background: #0d1424;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 16px;
+      padding: 22px;
+      margin: 1.8em 0;
+      display: flex;
+      justify-content: center;
+      overflow-x: auto;
+    }
+    .callout-card {
+      border-radius: 16px;
+      padding: 18px 22px;
+      margin: 1.6em 0;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.92em;
+      line-height: 1.65;
+      font-style: normal;
+    }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+
+  <!-- Üst İlerleme Çubuğu -->
+  <div class="w-full h-1 bg-slate-900">
+    <div id="top-progress" class="h-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 transition-all duration-300" style="width: 7%"></div>
+  </div>
+
+  <!-- Üst Başlık Barı -->
+  <header class="h-16 bg-slate-950/90 backdrop-blur border-b border-white/10 px-4 md:px-6 flex items-center justify-between shrink-0 z-30">
+    <div class="flex items-center gap-3">
+      <button onclick="toggleSidebar()" class="p-2 rounded-xl hover:bg-white/10 text-slate-300 transition" title="İçindekiler Menüsü">
+        ☰
+      </button>
+      <div class="flex items-center gap-2.5">
+        <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 text-slate-950 font-extrabold flex items-center justify-center shadow-lg shadow-emerald-500/20">📖</span>
+        <div>
+          <div class="text-sm font-bold text-white leading-tight">Zincirlerden Otonom Şirketlere</div>
+          <div id="header-subtitle" class="text-[11px] text-slate-400 font-mono">LangGraph & Ajan Mimarisi Başucu Kitabı</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sağ Kontroller -->
+    <div class="flex items-center gap-2 md:gap-3">
+      <a id="cockpit-back-btn" href="/" target="_top" class="hidden px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/15 text-slate-200 text-xs font-semibold transition items-center gap-1.5">
+        <span>👑</span> <span class="hidden lg:inline">Yönetici Kokpiti</span>
+      </a>
+
+      <span id="read-badge" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-white/10 text-xs text-slate-300 font-mono">
+        ⏱️ ~5 dk okuma
+      </span>
+
+      <!-- Font Boyutu -->
+      <div class="hidden md:flex items-center bg-slate-900 border border-white/10 rounded-xl p-0.5 text-xs">
+        <button onclick="changeFontSize(-2)" class="px-2.5 py-1 hover:bg-white/10 rounded-lg text-slate-300 font-semibold">A-</button>
+        <button onclick="changeFontSize(0)" class="px-2 py-1 hover:bg-white/10 rounded-lg text-slate-400">A</button>
+        <button onclick="changeFontSize(2)" class="px-2.5 py-1 hover:bg-white/10 rounded-lg text-slate-200 font-bold">A+</button>
+      </div>
+
+      <!-- Notlarım Butonu -->
+      <button onclick="toggleNotesDrawer()" class="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-semibold transition flex items-center gap-1.5">
+        <span>📝</span> <span class="hidden sm:inline">Bölüm Notum</span>
+      </button>
+
+      <!-- PDF İndir Butonu -->
+      <a id="pdf-download-btn" href="./LANGGRAPH_VE_OTONOM_AJANLAR_KITABI.pdf" download="LangGraph_ve_Otonom_Ajanlar_Kitabi.pdf" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 text-xs font-extrabold transition shadow-lg shadow-emerald-500/20 flex items-center gap-1.5">
+        <span>📥</span> <span>PDF İndir</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Gövde: Sol İçindekiler + Orta Sayfa Okuyucu + Sağ Not Çekmecesi -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- SOL İÇİNDEKİLER PANELİ -->
+    <aside id="sidebar" class="w-80 bg-slate-950/95 border-r border-white/10 flex flex-col shrink-0 transition-all duration-300 z-20">
+      <div class="p-4 border-b border-white/10">
+        <div class="relative">
+          <input id="search-input" oninput="filterTOC()" type="text" placeholder="Kitap içinde kavram ara..." class="w-full bg-slate-900 border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+          <span class="absolute left-3 top-2 text-slate-500 text-xs">🔍</span>
+        </div>
+        <div class="mt-2.5 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+          <span id="progress-label">Okuma İlerlemesi: 1 / 15</span>
+          <span id="completed-label" class="text-emerald-400">0 tamamlandı</span>
+        </div>
+      </div>
+
+      <nav id="toc-list" class="flex-1 overflow-y-auto custom-scroll p-3 space-y-4">
+        <!-- JS ile doldurulur -->
+      </nav>
+    </aside>
+
+    <!-- ORTA KİTAP SAYFASI ALANI -->
+    <main id="reader-scroll" class="flex-1 overflow-y-auto custom-scroll px-5 sm:px-10 md:px-16 py-10 scroll-smooth">
+      <div class="max-w-3xl mx-auto">
+        <!-- Kısım & Sayfa Üst Rozeti -->
+        <div class="flex items-center justify-between mb-4">
+          <span id="chapter-part-badge" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            KISIM I
+          </span>
+          <span id="page-counter" class="text-xs font-mono text-slate-500">Sayfa 1 / 15</span>
+        </div>
+
+        <!-- Bölüm İçeriği -->
+        <article id="chapter-content" class="book-prose">
+          Yükleniyor...
+        </article>
+
+        <!-- Sayfa Sonu Okundu İşareti & İleri-Geri Kartları -->
+        <div class="mt-14 pt-8 border-t border-white/10">
+          <div class="flex items-center justify-between mb-6">
+            <button onclick="markCurrentCompleted()" id="btn-complete" class="px-4 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-xs font-semibold transition flex items-center gap-2">
+              <span>✓</span> <span>Bu Bölümü Tamamladım Olarak İşaretle</span>
+            </button>
+            <span class="text-[11px] text-slate-500 font-mono hidden sm:inline">İpucu: Klavyede ⬅️ ve ➡️ yön tuşlarıyla sayfa çevirebilirsiniz</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-16">
+            <button id="btn-prev" onclick="prevChapter()" class="text-left p-5 rounded-2xl bg-slate-900/70 hover:bg-slate-900 border border-white/10 hover:border-cyan-500/40 transition group">
+              <div class="text-xs text-slate-400 mb-1 group-hover:text-cyan-400">← Önceki Sayfa</div>
+              <div id="prev-title" class="text-sm font-bold text-slate-200 truncate">-</div>
+            </button>
+
+            <button id="btn-next" onclick="nextChapter()" class="text-right p-5 rounded-2xl bg-slate-900/70 hover:bg-slate-900 border border-white/10 hover:border-emerald-500/40 transition group">
+              <div class="text-xs text-slate-400 mb-1 group-hover:text-emerald-400">Sonraki Sayfa →</div>
+              <div id="next-title" class="text-sm font-bold text-slate-200 truncate">-</div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- SAĞ BÖLÜM NOTLARI ÇEKMECESİ -->
+    <aside id="notes-drawer" class="hidden w-80 bg-slate-950 border-l border-white/10 p-5 flex-col shrink-0 z-20">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-bold text-amber-300 flex items-center gap-2">📝 Bölüm Notlarım</h3>
+        <button onclick="toggleNotesDrawer()" class="text-slate-400 hover:text-white text-sm">✕</button>
+      </div>
+      <p id="notes-chapter-label" class="text-xs text-slate-400 mb-3 truncate"></p>
+      <textarea id="chapter-note-input" oninput="autoSaveNote()" class="flex-1 w-full bg-slate-900 border border-white/10 rounded-xl p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-amber-500 resize-none" placeholder="Bu bölümde aklınıza gelen fikirleri, şirket senaryolarınızı veya sorularınızı buraya not alın..."></textarea>
+      <div class="mt-3 flex items-center justify-between">
+        <span id="note-save-msg" class="text-[11px] text-slate-500">Tarayıcı hafızasında kalıcıdır</span>
+        <button onclick="saveCurrentNote()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition">
+          💾 Kaydet
+        </button>
+      </div>
+      <div class="mt-3 pt-3 border-t border-white/10 flex items-center justify-between gap-2">
+        <button onclick="exportNotesJson()" class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-white/10 text-[11px] text-slate-300 font-semibold transition">
+          📥 Yedek İndir (.json)
+        </button>
+        <label class="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-white/10 text-[11px] text-slate-300 font-semibold transition text-center cursor-pointer">
+          📤 Yedek Yükle
+          <input type="file" accept=".json" onchange="importNotesJson(event)" class="hidden">
+        </label>
+      </div>
+    </aside>
+
+  </div>
+
+  <script>
+    const CHAPTERS = [{"id": 0, "part": "Giriş & Manifesto", "title": "Önsöz: Bir \"Vibe Coder\"ın Mimari Manifestosu", "short_title": "Önsöz: Mimari Manifesto", "markdown": "# 🧠 Zincirlerden Otonom Şirketlere: İnsan Dilinde LangGraph ve Ajan Mimarisi\n\n**Alt Başlık:** *Kod Hamallığı Yapmadan Yapay Zeka Ajanlarını, LangGraph Ekosistemini, LangSmith Gözlemlenebilirliğini ve Çoklu Ajan Şirketlerini Uçtan Uca Anlama Rehberi*\n\n---\n\n## 📑 İçindekiler\n\n- **Önsöz: Bir \"Vibe Coder\"ın Mimari Manifestosu**\n- **KISIM I: ZİHİNSEL DEVRİM — ZİNCİRLERDEN DÖNGÜSEL BEYİNLERE**\n  - **Bölüm 1:** Neden LangGraph? (Çıplak LLM, DAG, LCEL ve Döngüsel Ajan Devrimi)\n  - **Bölüm 2:** LangGraph'ın Anatomisi — State, Node ve Edge Üçlüsü\n- **KISIM II: AJANLARA EL, KOL VE MUHAKEME KAZANDIRMAK**\n  - **Bölüm 3:** Araç Çağırma (Tool Calling), ReAct Felsefesi ve Yapılandırılmış Kararlar\n- **KISIM III: ZAMAN, HAFIZA VE İNSAN KONTROLÜ (İLERİ RUNTIME)**\n  - **Bölüm 4:** Kalıcılık (Persistence), Checkpointer Mimarisi ve Kısa/Uzun Süreli Hafıza\n  - **Bölüm 5:** Human-in-the-Loop (İnsan Onayı), `Command` Mekanizması ve Zamanda Yolculuk (Time-Travel)\n- **KISIM IV: BİLGİ SİSTEMLERİ, EKİP MİMARİLERİ VE OTONOM ŞİRKET**\n  - **Bölüm 6:** Kopyala-Yapıştırın Sonu — Modern RAG, Agentic RAG, MCP ve Dinamik Beceriler (Skills)\n  - **Bölüm 7:** Tek Beyinden Orkestraya — 6 Çoklu Ajan Deseni, Subgraph'lar ve `Send` API\n  - **Bölüm 8:** Vaka Analizi — Kurduğumuz \"Otonom Ajan Şirketi\"nin Adım Adım Röntgeni\n- **KISIM V: GÖZLEMLENEBİLİRLİK, ÜRETİM MÜHENDİSLİĞİ VE TÜM EKOSİSTEM**\n  - **Bölüm 9:** Kör Uçuşun Sonu — LangSmith, Run Tree, Maliyet/Gecikme ve Kalite Sınavları (Evals)\n  - **Bölüm 10:** Saha Dersleri — Kotalar, Anahtar Rotasyonu, 20x Hızlandırma ve Kurumsal Güvenlik\n  - **Bölüm 11:** Ekosistem Haritası — LangGraph Studio, LangGraph Platform, Generative UI ve Yardımcı Araçlar\n  - **Bölüm 12:** Mezuniyet Yol Haritası — Kişisel Danışman Ajandan Gerçek Şirkete Geçiş Planı\n- **Ekler:** Hızlı Karar Ağacı & Kapsamlı LangGraph Terimler Sözlüğü\n\n---\n\n## Önsöz: Bir \"Vibe Coder\"ın Mimari Manifestosu\n\nYazılım dünyası yüz yılda bir gerçekleşen bir kırılma yaşıyor. Eskiden iyi bir mühendis olmak, yüzlerce satırlık sözdizimini (syntax) ezbere yazabilmek, noktalı virgülleri unutmamak ve karmaşık kütüphane parametrelerini akılda tutmak demekti. Bugün ise **kodu yazmak ucuzladı; neyin, neden ve hangi mimariyle inşa edileceğine karar vermek ise her şey oldu.**\n\nBu kitap klasik bir programlama kitabı değildir. Sayfalar dolusu sıkıcı kod blokları arasında kaybolmayacaksınız. Tam tersine bu kitap, `📂 LangGraph_Course` çalışma alanında sıfırdan başlayarak adım adım inşa ettiğimiz **5 canlı projenin**, kurduğumuz **Vibe Coder Web Laboratuvarının**, çözdüğümüz gerçek krizlerin (kota duvarları, 30 saniyelik gecikmeler, veritabanı kilitleri, güvenlik frenleri) ve yol boyunca sorduğumuz onca kritik *\"Peki ama bunu arka planda nasıl anlıyor?\"* sorusunun damıtılmış halidir.\n\n> [!IMPORTANT]\n> **Bu Kitabın Altın Kuralı:** Bir yapay zeka mimarının görevi satır satır tuğla örmek değil, binanın statiğini, elektrik tesisatını, güvenlik kapılarını ve odalar arası geçişini tasarlamaktır. Bu kitabı bitirdiğinizde tek bir satır kodu ezberlemiş olmayacaksınız; ama **LangGraph ve etrafındaki tüm araç ekosisteminin nasıl çalıştığını bir başmimar berraklığında bileceksiniz.**\n\nYolculuğumuz boyunca kendi elimizle kurduğumuz şu beş istasyonu sürekli canlı laboratuvarımız olarak kullanacağız:\n1. **Temel Eğitim (`📂 01_merhaba_langgraph.py` & `📂 02_tool_react_ajani.py`):** İlk durum grafımız, Eğitmen-Eleştirmen ikilisi ve çok adımlı finansal ReAct ajanımız.\n2. **İleri Runtime (`📂 01_hafizali_ajan.py`):** SQLite çelik kasası, CEO Ahmet ile Muhasebeci Mehmet'in izole hafızaları ve 150.000 TL'lik havalede devreye giren insan onayı freni.\n3. **Ekip Mimarisi (`📂 01_supervisor_ekibi.py`):** Proje yöneticisi (Supervisor) liderliğinde çalışan Araştırmacı ve Geliştirici uzman ekibi.\n4. **Gözlemlenebilirlik (`📂 01_langsmith_izleme.py` & `📂 langsmith_atolyesi.ipynb`):** Canlı telemetri, gecikme/maliyet hesabı, LangSmith ağaçları ve kişisel deney günlüğü atölyemiz.\n5. **Büyük Final ve Yönetici Kokpiti (`📂 sirket_motoru.py`, `📂 yonetici_masasi.py` & `📂 model_factory.py`):** Dinamik API anahtarı rotasyonuyla kesintisiz çalışan, 3 departmanlı **Otonom Ajan Şirketi** ve Yönetim Kurulu Başkanının tek tıkla bütçe onaylayıp rapor indirdiği görsel **Yönetici Kokpiti**.\n\nKemerlerinizi bağlayın. Önce zihnimizdeki \"sohbet botu\" algısını yıkıp yerine gerçek \"otonom sistem\" mimarisini kurarak başlıyoruz.", "read_min": 3}, {"id": 1, "part": "KISIM I: ZİHİNSEL DEVRİM — ZİNCİRLERDEN DÖNGÜSEL BEYİNLERE", "title": "Bölüm 1: Neden LangGraph? (Çıplak LLM, DAG, LCEL ve Döngüsel Ajan Devrimi)", "short_title": "Bölüm 1: Neden LangGraph? (Çıplak LLM, DAG, LCEL ve Döngüsel Ajan Devrimi)", "markdown": "## Bölüm 1: Neden LangGraph? (Çıplak LLM, DAG, LCEL ve Döngüsel Ajan Devrimi)\n\n### 1.1 Kavanozdaki Dahi Beyin: Çıplak LLM Nedir ve Neyi Yapamaz?\n\nGemini, GPT veya Claude gibi Büyük Dil Modellerini (LLM) gözünüzde canlandırmak için şu metaforu kullanın: **Cam bir kavanozun içinde yaşayan, dünyadaki tüm kütüphaneleri okumuş süper zeki bir profesör.**\n\nBu profesörle camın arkasından konuşabilirsiniz. Ona *\"Bana Roma İmparatorluğu'nu anlat\"* derseniz muazzam bir kompozisyon yazar. Ama ona şu üç cümleden birini söylerseniz çaresiz kalır:\n1. *\"Şu an Apple hissesi kaç dolar?\"* — Bilmez, çünkü kavanozun dışındaki canlı internete eli uzanmaz.\n2. *\"Tedarikçiye 150.000 TL havale yap.\"* — Yapamaz, çünkü banka sisteminin butonlarına basacak elleri ve kolları yoktur.\n3. *\"Dün sana söylediğim gizli bütçemiz ne kadardı?\"* — Hatırlamaz! Çünkü her soru-cevaptan sonra kavanozdaki profesörün hafızası tamamen silinir (Stateless / Durumsuz çalışır). Sohbet uygulamalarında sizi hatırlıyormuş gibi görünmesinin tek sebebi, uygulamanın her yeni mesajınızda **eski konuşmanın tamamını baştan sona profesöre gizlice tekrar okutmasıdır.**\n\nİşte bir **Ajan (Agent)**, bu kavanozdaki dahi beyne **göz (veri okuma), el-kol (araç çalıştırma), not defteri (hafıza) ve iç ses (kendi hatasını görüp düzeltme döngüsü)** takılmış halidir.\n\n---\n\n### 1.2 Deterministik Yazılım vs Olasılıksal (Probabilistic) Sistemler\n\nKlasik yazılımda her şey kesin kurallara bağlıdır (`Deterministik`). Bir hesap makinesinde `2 + 2` tuşuna milyon kere bassanız milyonunda da `4` çıkar. Akış şeması mühendis tarafından önceden çivilenmiştir: *\"Müşteri şu butona basarsa A fonksiyonuna git, şuna basarsa B fonksiyonuna git.\"*\n\nYapay zeka ajanları ise **olasılıksal (`Probabilistic`)** karar verir. Kullanıcı *\"Finans servisimiz sağlıklı mı, bir de 6 aylık sunucu bütçemizi çıkar\"* dediğinde hangi aracın hangi sırayla çağrılacağını önceden `if-else` ile kodlayamazsınız; çünkü bir sonraki kullanıcı bambaşka bir cümle kuracaktır.\n\nAncak burada çok tehlikeli bir tuzak vardır:\n- Sistemi **%100 katı kurallarla** yazarsanız aptal bir sesli yanıt sistemine dönüşür (\"Lütfen 1'i tuşlayın\").\n- Sistemi **%100 başıboş bir yapay zekaya** bırakırsanız ne zaman duracağını şaşırır, halüsinasyon görür, sonsuz döngüye girer veya sormadan şirket kasasını boşaltır.\n\n**LangGraph'ın varlık sebebi tam olarak bu ikisini evlendirmektir:** Yapay zekanın yaratıcı karar alma esnekliğini, demir gibi sağlam mühendislik raylarının (Graf Mimarisi) içine oturtmak!\n\n---\n\n### 1.3 DAG ve LCEL Nedir? Düz Boru Hatları Neden Duvara Tosladı?\n\nEğitimimiz sırasında sorduğunuz en temel sorulardan biri şuydu: *\"DAG ve LCEL'i biraz daha açar mısın? Neden yetmediler?\"*\n\nYapay zeka uygulamalarının ilk döneminde (2023 başları), geliştiriciler işlemleri birbirine su borusu gibi uç uca ekliyordu. Bilgisayar biliminde buna **DAG (Directed Acyclic Graph — Yönlü Döngüsüz Çizge)** denir:\n- **Directed (Yönlü):** Su hep ileri doğru akar.\n- **Acyclic (Döngüsüz):** Suyun geriye dönmesi, geçtiği bir istasyona tekrar uğraması **kesinlikle yasaktır.**\n\nLangChain ekibi bu düz boru hatlarını kolayca yazmak için **LCEL (LangChain Expression Language)** adını verdiği şık bir boru birleştirme dili geliştirdi:\n\n```python\n# LCEL ile klasik düz zincir (DAG): Geri dönüş imkansız!\nzincir = sablon | model | metin_ayiklayici\n```\n\nBu yapı; *\"Web sayfasını oku -> Özetle -> Türkçeye çevir -> Ekrana bas\"* gibi tek yönlü fabrikasyon işler için harikadır. Tıpkı bir araba yıkama tüneli gibidir: Araba önden girer, köpüklenir, durulanır, kurulanır ve arkadan çıkar.\n\n**Peki araba tünelden çıktığında hala çamurluysa ne olur?**\nAraba yıkama tünelinde (DAG / LCEL) arabanın kendi kendine *\"Dur bakalım, sol kapımda leke kalmış, ben köpükleme istasyonuna geri döneyim\"* deme şansı **yoktur!** Tünel tek yönlüdür.\n\nOysa gerçek hayatta bir problemi çözerken insan beyni düz bir çizgide ilerlemez:\n1. Bir kod yazarsınız,\n2. Çalıştırırsınız, hata verir,\n3. Hatayı okur, kodu düzeltir, **tekrar** çalıştırırsınız,\n4. Çalışınca görevi bitirirsiniz.\n\nKaç denemede çözüleceğini baştan bilemezsiniz! Belki ilk seferde çalışacak, belki 4 kere geri dönecektir. İşte bu **\"Deneme -> Gözlemleme -> Geri Dönme (Loop)\"** yeteneğine geçtiğiniz an DAG dünyası biter ve **LangGraph (Döngüsel Çizge / Cyclic Graph)** dünyası başlar.\n\n```mermaid\nflowchart LR\n    subgraph Duz_Zincir [\"Geleneksel Zincir (DAG / LCEL)\"]\n        direction LR\n        G1[\"Girdi\"] --> P1[\"Şablon\"] --> M1[\"Model\"] --> C1[\"Çıktı\"]\n    end\n\n    subgraph Dongusel_Graf [\"LangGraph (Döngüsel Ajan Mimarisi)\"]\n        direction LR\n        Basla([\"Başla\"]) --> Beyin[\"Ajan Düşünür\"]\n        Beyin --> Karar{\"Eksik Bilgi Var mı?\"}\n        Karar -->|\"Evet, Araç Kullan\"| Arac[\"Aracı Çalıştır\"]\n        Arac -->|\"Sonucu Gör ve Tekrar Düşün\"| Beyin\n        Karar -->|\"Hayır, Cevap Hazır\"| Bitis([\"Bitir\"])\n    end\n```\n\n---\n\n### 1.4 \"Workflow\" (İş Akışı) vs \"Agent\" (Ajan) Ayrımı\n\nHer şeyi otonom ajan yapmak zorunda değilsiniz. LangGraph size bir **Otonomi Kadranı** sunar:\n- **Sabit İş Akışı (Workflow):** Adımlar bellidir (`Araştır -> Özetle -> Formatla`), sadece aralarda kalite kontrol döngüsü vardır. Ucuz, hızlı ve öngörülebilirdir.\n- **Yarı Otonom Ekip (Router / Supervisor):** Ana istasyonlar bellidir ama hangi istasyona kaç kez gidileceğine bir yönetici model karar verir.\n- **Tam Otonom Ajan (ReAct Agent):** Elinde alet çantası vardır; hedefe ulaşana kadar hangi adımları atacağını tamamen kendisi planlar.\n\n---\n\n### 1.5 Arka Plandaki Motor: Google Pregel ve \"Süper Adım\" (Super-step) Mantığı\n\nLangGraph rastgele yazılmış bir `while` döngüsü değildir. Kalbinde Google'ın milyarlarca web sayfasını işlemek için icat ettiği **Pregel** mimarisinden esinlenen bir **Süper Adım (`Super-step`)** motoru çalışır.\n\nBunu bir **film karesi** veya **satranç hamlesi** gibi düşünün:\n1. **1. Süper Adım:** Aktif olan düğüm (veya paralel düğümler) uyanır, ortak panoyu okur, işini yapar ve panoya notunu bırakıp uyur.\n2. **Mühürleme Anı:** Bir sonraki adıma geçilmeden hemen önce LangGraph zamanı dondurur! Panodaki yeni notları birleştirir ve veritabanına bir **kayıt noktası (Checkpoint)** yazar.\n3. **2. Süper Adım:** Trafik kurallarına (Edge) göre sıradaki düğüm uyandırılır.\n\nBu \"Adım -> Mühürle -> Adım -> Mühürle\" ritmi sayesinde LangGraph'ta elektriği çekseniz bile ajan kaldığı kareden uyanır, zamanda geriye sarılabilir ve insan onayı için günlerce uyutulabilir!", "read_min": 5}, {"id": 2, "part": "KISIM I: ZİHİNSEL DEVRİM — ZİNCİRLERDEN DÖNGÜSEL BEYİNLERE", "title": "Bölüm 2: LangGraph'ın Anatomisi — State, Node ve Edge Üçlüsü", "short_title": "Bölüm 2: LangGraph'ın Anatomisi — State, Node ve Edge Üçlüsü", "markdown": "## Bölüm 2: LangGraph'ın Anatomisi — State, Node ve Edge Üçlüsü\n\nLangGraph ne kadar büyük bir holding simülasyonu kurarsa kursun, her şey sadece **üç temel yapı taşından** oluşur: **State (Durum)**, **Node (Düğüm)** ve **Edge (Kenar)**.\n\nBunu hiç unutmayacağınız tek bir metaforla zihnimize kazıyalım: **Bir Fabrika Üretim Bandı.**\n- **State (Durum):** Fabrikanın ortasındaki **Ortak Beyaz Tahta (veya Üretim Dosyası)**.\n- **Node (Düğüm):** İşi yapan **Uzman Ustalar / Makineler**.\n- **Edge (Kenar):** Dosyayı bir ustadan diğerine taşıyan **Konveyör Bantlar ve Yön Tabelaları**.\n\n---\n\n### 2.1 State (Durum): Ortak Beyaz Tahta ve \"Reducer\" Mucizesi\n\nBir şirkette Araştırmacı, Yazılımcı ve CEO aynı odada nasıl anlaşır? Ortada duran ortak bir proje klasörüyle! LangGraph'ta bu ortak klasöre **State** denir.\n\n#### Sık Sorulan Soru: Python'da `dict` (Sözlük) Nedir ve Ustalar Neden Sadece Küçük Bir `dict` Döndürür?\nDerslerimizde `📂 01_merhaba_langgraph.py` dosyasının 27. satırını incelerken harika bir soru sormuştunuz: *\"Buradaki `dict` nedir ve düğüm neden tüm State'i değil de tek elemanlı bir sözlük döndürüyor?\"*\n\nPython'da `dict` (`{\"anahtar\": \"değer\"}`), etiketli çekmecelerden oluşan bir kutudur. Örneğin `CourseState` tahtamızda iki çekmece olsun:\n- `lesson_topic`: `\"LangGraph Temelleri\"`\n- `messages`: `[Kullanıcı sorusu, ...]`\n\nEğitmen düğümü (`instructor_node`) işini bitirdiğinde bütün beyaz tahtayı söküp yeniden getirmek zorunda değildir! Sadece `{\"messages\": [yeni_cevap]}` şeklinde küçük bir post-it kağıdı uzatır ve *\"Ben sadece `messages` çekmecesini güncelledim, `lesson_topic` çekmecesine dokunmayın\"* der.\n\n#### Büyük Tehlike: Silgiyle Silmek (Overwrite) vs Altına Eklemek (`Reducer`)\nNormalde bir beyaz tahtada `\"Mesajlar\"` kutusuna yeni bir cümle yazarsanız, eski yazıyı silip üstüne yazmış olursunuz (`Overwrite`). Eğer Eğitmen kendi cevabını yazarken öğrencinin sorusunu silerse, bir sonraki adımda gelen Eleştirmen (`critic_node`) öğrencinin ne sorduğunu göremez!\n\nİşte LangGraph'taki **Reducer (Birleştirici Kural)** tam olarak bu çekmecenin kapağına yapıştırılan talimattır:\n\n```python\nclass CourseState(TypedDict):\n    messages: Annotated[list[BaseMessage], add_messages]  # Altına ekle (Silme!)\n    lesson_topic: str                                     # Üzerine yaz (Güncelle)\n```\n\nBuradaki iki satır arasındaki devasa farka bakın:\n- `lesson_topic: str` çekmecesinde özel bir kural yoktur. Bir düğüm yeni bir konu gönderirse eskisi silinir, yenisi yazılır. (Örn: `\"Sıradaki çalışan: Coder\"` bilgisi için üzerine yazmak tam istediğimiz şeydir!)\n- `Annotated[..., add_messages]` çekmecesinde ise **`add_messages`** adında akıllı bir arşiv memuru nöbet tutar. Hangi düğüm yeni bir mesaj gönderirse göndersin, arşiv memuru eski mesajları korur ve yenisini listenin **en altına ekler** (hatta aynı ID'ye sahip bir mesaj düzeltildiyse onu akıllıca günceller!).\n\n> [!TIP]\n> **Kısa Yol (`MessagesState`):** Sadece mesaj listesi tutan basit bir graf kuruyorsanız, `TypedDict` ve `add_messages` satırlarını uzun uzun yazmak yerine LangGraph'ın hazır sunduğu `MessagesState` sınıfını doğrudan kullanabilirsiniz. İçinde `add_messages` takılı olarak hazır gelir!\n\n#### Mesaj Ailesi: Tahtadaki Konuşmacıların Yaka Kartları\n`messages` listesinin içindeki metinler düz yazı değil, kimden geldiği belli olan zarflardır:\n1. **`SystemMessage` (Anayasa / Rol Kartı):** Modele kim olduğunu söyler (*\"Sen Kıdemli Finans Denetçisisin\"*).\n2. **`HumanMessage` (İnsan / Görev Direktifi):** Kullanıcının talebidir (*\"Apple hissesini hesapla\"*).\n3. **`AIMessage` (Modelin Yanıtı veya Kararı):** Yapay zekanın ürettiği cevaptır (veya çağırmak istediği aracın sipariş fişidir).\n4. **`ToolMessage` (Kanıt / Araç Sonucu):** Çalışan Python fonksiyonunun getirdiği gerçek veridir (*\"AAPL: 230.10 USD\"*).\n\n#### `TypedDict` mi, `Pydantic` mi?\nState tanımlarken iki seçeneğiniz vardır:\n- **`TypedDict`:** Tüy gibi hafiftir, çalışma anında yavaşlatma yapmaz. LangGraph'ta graf içi State tanımlarken endüstri standardıdır.\n- **`Pydantic (BaseModel)`:** Sıkı güvenlik görevlisidir. Bir alana sayı yerine harf gelirse anında hata fırlatır veya dönüştürür. Özellikle **dış dünyadan gelen girdileri doğrularken** ve **LLM'den yapılandırılmış karar alırken (`RouteDecision`)** vazgeçilmezdir.\n\n---\n\n### 2.2 Nodes (Düğümler) ve Edges (Kenarlar): En Çok Karıştırılan Ayrım!\n\nEğitimimiz sırasında sorduğunuz şu soru, LangGraph öğrenen herkesin aklından geçen ama kimsenin sormaya cesaret edemediği en kilit soruydu:\n> *\"Ben `def` ile fonksiyonu tanımlıyorum, sonra `workflow.add_node` yapıyorum, sonra bir de `workflow.add_edge` yapıyorum. Edge'de zaten birbirine bağlıyorsam `add_node` ile nereye ve niye ekliyorum?\"*\n\nGel, bunu **Fabrika Kurulumunun 3 Aşaması** ile sonsuza dek netleştirelim:\n\n1. **`def instructor_node(state): ...` (Makineyi İcat Etmek):**\n   Bu aşamada makine hala sizin bilgisayarınızdaki sıradan bir Python fonksiyonudur. LangGraph'ın bu fonksiyondan **haberi bile yoktur.** Makine henüz fabrikanın dışındaki depoda duruyordur.\n2. **`workflow.add_node(\"instructor\", instructor_node)` (Makineyi Fabrika Zeminine Monte Etmek ve İsim Plakası Takmak):**\n   Depodaki makineyi alıp fabrikanın içine getirir, yere vidalar ve üzerine **`\"instructor\"`** yazılı resmi bir tabela asarsınız. Artık LangGraph fabrikasında bu isimde resmi bir istasyon vardır, ama henüz hiçbir yere kablosu veya bandı bağlı değildir.\n3. **`workflow.add_edge(\"instructor\", \"critic\")` (İstasyonlar Arasına Konveyör Bant Çekmek):**\n   Artık fonksiyonların kendisiyle değil, taktığınız **isim tabelalarıyla** konuşursunuz: *\"`instructor` istasyonundan çıkan dosyayı `critic` istasyonuna götüren bir bant döşe!\"*\n\nNeden bu ikisi ayrıdır? Çünkü aynı makine fonksiyonunu fabrikada iki farklı isimle iki ayrı istasyon olarak kurabilirsiniz veya bir istasyona üç farklı yerden bant bağlayabilirsiniz!\n\n```mermaid\nflowchart LR\n    Basla([\"START (Giriş Kapısı)\"]) --> Egitmen[\"İstasyon 1: instructor\\n(Konuyu Anlatır)\"]\n    Egitmen --> Elestirmen[\"İstasyon 2: critic\\n(Yanıtı Değerlendirir)\"]\n    Elestirmen --> Bitis([\"END (Çıkış Kapısı)\"])\n```\n\n*Canlı Örnek:* İlk dersimiz olan `📂 01_merhaba_langgraph.py` dosyasında tam olarak yukarıdaki akışı kurmuştuk. Öğrenci merhaba diyor (`START`), Eğitmen hoş geldin mesajı yazıp ortak panoya ekliyor (`instructor`), bant dosyayı Eleştirmene taşıyor (`critic`), Eleştirmen eğitmenin cevabını okuyup motive edici koçluk notunu ekliyor ve kapıdan çıkıyor (`END`).\n\n---\n\n### 2.3 Derleme (`compile`) ve Canlı Yayın (`invoke` vs `stream`)\n\nTüm istasyonları yerleştirdiniz ve bantları çektiniz. Son satırda neden **`app = workflow.compile()`** yazarız?\n\n`compile()` fabrikanın **Yapı Denetim Mühendisi**dir. Şalteri kaldırmadan önce planı inceler:\n- *\"Hiçbir bandın gitmediği hayalet bir istasyon unuttun mu?\"*\n- *\"Olmayan bir istasyon ismine bant çektin mi?\"*\n- *\"Hafıza kasasını (Checkpointer) ve güvenlik frenlerini (Interrupt) nereye bağlayacağım?\"*\n\nDenetimden geçince elinize çalışmaya hazır `app` motorunu verir. Bu motoru iki farklı şekilde çalıştırabilirsiniz:\n\n| Çalıştırma Yöntemi | Günlük Hayat Karşılığı | Ne Zaman Kullanılır? |\n| :--- | :--- | :--- |\n| **`app.invoke(girdi)`** | Restoranda sipariş verip yemek masaya gelene kadar beklemek. | Arka plan işlerinde, API yanıtlarında, sadece nihai sonuç gerektiğinde. |\n| **`app.stream(girdi)`** | Açık mutfaklı restoranda aşçının hamuru açmasını, sosu dökmesini ve fırına sürmesini anbean izlemek. | Kullanıcı arayüzlerinde, ajanların hangi aracı çağırdığını canlı gösterirken! |\n\nÜstelik `stream` yaparken kameranın nereye odaklanacağını (`stream_mode`) seçebilirsiniz:\n- **`values`:** Her adımdan sonra beyaz tahtanın **tamamının** fotoğrafını gönderir (`📂 02_tool_react_ajani.py` içinde kullandığımız mod).\n- **`updates`:** Sadece o adımda çalışan ustanın yapıştırdığı **yeni post-it'i** gönderir (Çok daha hafif ve popülerdir).\n- **`messages`:** ChatGPT gibi kelimelerin ekrana **harf harf / token token** akmasını sağlar!\n- **`custom`:** Düğümün içinden kullanıcı ekranına *\"Şu an piyasa verilerinin %60'ı tarandı...\"* gibi özel durum mesajları fırlatır.", "read_min": 6}, {"id": 3, "part": "KISIM II: AJANLARA EL, KOL VE MUHAKEME KAZANDIRMAK", "title": "Bölüm 3: Araç Çağırma (Tool Calling), ReAct Felsefesi ve Yapılandırılmış Kararlar", "short_title": "Bölüm 3: Araç Çağırma (Tool Calling), ReAct Felsefesi ve Yapılandırılmış Kararlar", "markdown": "## Bölüm 3: Araç Çağırma (Tool Calling), ReAct Felsefesi ve Yapılandırılmış Kararlar\n\nBirinci bölümde kavanozdaki dahi beyinden (LLM) bahsetmiştik. Şimdi bu beyne gerçek dünyada iş yapabilecek **eller ve kollar (Tools)** takıyoruz. Ancak burası, geliştiricilerin %80'inin yanlış anladığı, sizin ise yan sorularınızla tam kalbinden yakaladığınız noktadır!\n\n---\n\n### 3.1 Büyük Sır: LLM Hangi Fonksiyonu Çağıracağını NASIL Anlar?\n\nEğitimimiz sırasında `📂 02_tool_react_ajani.py` çalışırken harika bir soru sormuştunuz:\n> *\"'Benim bunu cevaplamak için `get_company_stock_price` fonksiyonunu çağırmam gerek' dedin ya... Model bunu NASIL anlar?\"*\n\nBirçok kişi yapay zekanın bizim Python kodumuzun içini okuduğunu veya fonksiyonu kendi başına çalıştırdığını sanır. **İkisi de yanlıştır!** Gelin perde arkasındaki 4 adımlık sihri tüm çıplaklığıyla görelim:\n\n#### Adım 1: `@tool` Dekoratörü Python Fonksiyonunu Bir \"Menü Kartına\" Çevirir\nSiz Python'da şu üç satırlık fonksiyonu yazdığınızda:\n\n```python\n@tool\ndef get_company_stock_price(ticker: str) -> str:\n    \"\"\"Belirtilen hisse senedi kodunun (ticker) anlık fiyatını getirir.\"\"\"\n    ...\n```\n\n`@tool` etiketi fonksiyonun içindeki Python kodlarını **hiç umursamaz!** Onun yerine üç şeye bakar:\n1. **Fonksiyonun Adı:** `get_company_stock_price`\n2. **Parametre Tipleri:** `ticker` adında bir metin (`str`) istiyor.\n3. **Docstring (Üç tırnak içindeki açıklama):** *\"Belirtilen hisse senedi kodunun anlık fiyatını getirir.\"*\n\nVe bunları arka planda evrensel bir **JSON Menü Kartına (JSON Schema)** dönüştürür!\n\n> [!WARNING]\n> **Docstring Hayati Önem Taşır!** Klasik yazılımda fonksiyon açıklamaları (docstring) diğer yazılımcılar okusun diye yazılır; yazmasanız da kod çalışır. Ajan mimarisinde ise **docstring, yapay zekanın o aracı ne zaman seçeceğini okuduğu tek kullanma kılavuzudur!** Kötü veya boş bir docstring yazarsanız, en zeki model bile elindeki tornavidayla çivi çakmaya çalışır.\n\n#### Adım 2: `bind_tools` Modele Alet Çantasının Kataloğunu Uzatır\n`llm.bind_tools(tools)` dediğinizde, her soru sorduğunuzda modele gizlice şu katalog gider:\n*\"Bak sevgili Gemini, kullanıcı sana bir soru soracak. İstersen doğrudan Türkçe cevap ver; AMA elinde şu 4 aletin kataloğu var: `get_company_stock_price`, `convert_currency`, `calculate_growth_rate`, `get_company_employee_count`. Eğer cevabı bilmiyorsan uydurma, katalogdan uygun aleti seçip bana sipariş fişi yaz!\"*\n\n#### Adım 3: LLM Kodu Çalıştırmaz, Sadece \"Sipariş Fişi\" (`tool_calls`) Yazar!\nKullanıcı *\"Apple (AAPL) hisse fiyatı kaç dolar?\"* dediğinde Gemini'nin içinde Python çalışmaz. Gemini metin üretmek yerine özel bir veri paketi (`AIMessage` içinde `tool_calls`) üretir:\n- **Seçilen Alet:** `get_company_stock_price`\n- **Argümanlar:** `{\"ticker\": \"AAPL\"}`\n\nYani model aslında garson gibi mutfağa bir **sipariş fişi** uzatmıştır!\n\n#### Adım 4: `ToolNode` Mutfağa Girer ve Gerçek Kodu Çalıştırır\nLangGraph'taki hazır **`ToolNode`** bileşeni bizim mutfak şefimizdir. Modelin uzattığı sipariş fişini alır, bilgisayarınızdaki gerçek Python fonksiyonunu `ticker=\"AAPL\"` ile çalıştırır, çıkan `\"$230.10\"` cevabını bir `ToolMessage` zarfına koyup tekrar beyaz tahtaya (`State`) asar!\n\n---\n\n### 3.2 İkinci Büyük Sır: `tools_condition` Yapay Zeka mıdır?\n\nYine ders esnasında sorduğunuz o nokta atışı soruyu hatırlayalım:\n> *\"`tools_condition` hazır mı? Kendi mi anlıyor hangi koşulda tetikleneceğini?\"*\n\nEvet, LangGraph'ın içinde hazır gelir **ve içinde zerre kadar yapay zeka yoktur!** Sıfır token harcar, milisaniyenin binde birinde çalışır. Yaptığı tek iş, beyaz tahtadaki son mesaja bakıp şu basit trafik polisliğini yapmaktır:\n- *\"Son mesajın elinde bir **sipariş fişi (`tool_calls`)** var mı?\"*\n  - **Varsa:** Yolu mutfağa (`\"tools\"` düğümüne) çevir!\n  - **Yoksa:** Demek ki model nihai cevabını yazmış, yolu çıkış kapısına (`END`) çevir!\n\n```mermaid\nsequenceDiagram\n    autonumber\n    actor Kullanici as Kullanıcı\n    participant Ajan as Ajan Düğümü (Gemini)\n    participant Trafik as tools_condition (Trafik Polisi)\n    participant Mutfak as ToolNode (Python Motoru)\n\n    Kullanici->>Ajan: \"Apple hissesi kaç USD, kaç TRY ve kaç çalışanı var?\"\n    Note over Ajan: Katalog incelenir: Önce USD fiyatı ve çalışan sayısı lazım!\n    Ajan->>Trafik: Sipariş Fişi: [hisse_fiyati(\"AAPL\"), calisan_sayisi(\"Apple\")]\n    Trafik->>Mutfak: Sipariş var! Mutfağa yönlendir\n    Mutfak->>Ajan: Kanıtlar: \"230.10 USD\" ve \"161.000 çalışan\"\n    Note over Ajan: USD fiyatını öğrendim (230.10)! Şimdi TRY kura çevirmeliyim!\n    Ajan->>Trafik: Sipariş Fişi: [doviz_cevir(230.10, \"USD\", \"TRY\")]\n    Trafik->>Mutfak: Yeni sipariş var! Tekrar mutfağa yönlendir\n    Mutfak->>Ajan: Kanıt: \"7.938,45 TRY\"\n    Note over Ajan: Tüm kanıtlar tamam! Artık şık bir rapor yazabilirim.\n    Ajan->>Trafik: Düz Metin Yanıt (Sipariş fişi yok)\n    Trafik->>Kullanici: Çıkışa yönlendir -> Nihai Türkçe Rapor\n```\n\n---\n\n### 3.3 ReAct (Reason + Act) Felsefesi: Paralel Zeka vs Ardışık Zeka\n\nYukarıdaki şemaya dikkatle bakın! `📂 02_tool_react_ajani.py` testimizde tek bir soruyla hem **Paralel Araç Çağırmayı** hem de **Ardışık Çok Adımlı Muhakemeyi (Multi-hop Reasoning)** aynı anda görmüştük:\n\n1. **Paralel Akıl:** Apple'ın dolar bazındaki hisse fiyatı ile çalışan sayısı birbirinden bağımsızdır. Gemini tek bir düşünme adımında **iki sipariş fişini aynı anda** keser; `ToolNode` ikisini paralel çalıştırıp zamandan tasarruf eder!\n2. **Ardışık (Bağımlı) Akıl:** Peki neden ilk adımda döviz çevirme (`convert_currency`) aracını da çağırmadı? Çünkü kaç doları çevireceğini **henüz bilmiyordu!** Önce `230.10` rakamının mutfaktan dönmesini bekledi, döngüsel kenar (`tools -> agent`) sayesinde bu rakamı okudu ve ikinci turda `230.10` sayısını döviz aracına gönderdi!\n\nİşte literatürde **ReAct (`Reasoning` = Düşünme + `Acting` = Eyleme Geçme)** denilen devrim tam olarak budur. Ve fark ettiyseniz: `tools` düğümünden `agent` düğümüne geri dönen o küçücük ok olmasaydı, ajan ikinci adımı asla atamazdı!\n\n---\n\n### 3.4 Gelişmiş İpucu: `InjectedState` (Araca Gizli Belge Uzatmak)\n\nPeki ya bir aracın çalışması için kullanıcının kimlik numarası (`user_id`) veya şirket yetki seviyesi gerekiyorsa ama **LLM'in bu karmaşık kimlik numarasını tahmin etmesini veya uydurmasını istemiyorsak?**\n\nLangGraph'ta **`InjectedState`** adında muazzam bir güvenlik numarası vardır. Aracın parametresini `InjectedState` olarak işaretlediğinizde, bu parametre LLM'e giden \"Menü Kartından\" gizlenir! LLM sadece işiyle ilgili parametreyi doldurur; `user_id` bilgisini ise `ToolNode` doğrudan güvenli beyaz tahtadan (`State`) alıp fonksiyona enjekte eder. Böylece hem token tasarrufu sağlanır hem de yapay zekanın başkasının kullanıcı numarasını uydurma (halüsinasyon / güvenlik açığı) ihtimali sıfırlanır.\n\n---\n\n### 3.5 Yapılandırılmış Çıktı (`with_structured_output`): Şairi Memura Dönüştürmek\n\nBazen yapay zekanın uzun cümleler kurmasını değil, sadece bir form doldurmasını istersiniz. Örneğin bir yöneticinin (Supervisor) *\"Hmm, bence şimdi araştırmacı arkadaşımız bir baksın bakalım...\"* gibi geveze bir paragraf yazması kodunuzu bozar; siz ondan net olarak sadece `\"Researcher\"`, `\"Coder\"` veya `\"FINISH\"` kelimelerinden birini seçmesini istersiniz.\n\nİşte `Pydantic` ile bir kalıp çizip modele **`llm.with_structured_output(RouteDecision)`** dediğinizde, modelin elinden serbest kağıdı alıp önüne **kutucuklu resmi bir form** koyarsınız:\n\n```python\nclass RouteDecision(BaseModel):\n    next: Literal[\"Researcher\", \"Coder\", \"FINISH\"]\n    reason: str\n```\n\nArtık model istese de bu üç seçenek dışında bir harf üretemez! Çoklu ajan sistemlerinde (Modül 3 ve Modül 5) departmanlar arası yönlendirmenin sıfır hatayla çalışmasının sırrı bu kilit mekanizmadır.\n\n---\n\n### 3.6 Hazır Paket (`create_react_agent`) vs Özel Mimari (`StateGraph`)\n\nLangGraph size `langgraph.prebuilt` altında `create_react_agent(model, tools)` adında tek satırlık hazır bir fabrika da sunar. Bu fonksiyon az önce öğrendiğimiz `agent` düğümünü, `ToolNode` mutfağını ve `tools_condition` döngüsünü sizin yerinize arka planda otomatik kurar.\n\n**Peki ne zaman hangisini seçmelisiniz?**\n- **Hızlı bir prototip veya tek kişilik uzman bir işçi ajan** kuruyorsanız: `create_react_agent` harika bir kısayoldur.\n- **Özel şirket kuralları, çoklu departmanlar, özel State alanları (`allocated_budget`, `is_audit_passed`) ve özel güvenlik kapıları** kuruyorsanız: Doğrudan `StateGraph` ile kendi fabrikanızı çizmek size sınırsız kontrol gücü verir.", "read_min": 6}, {"id": 4, "part": "KISIM III: ZAMAN, HAFIZA VE İNSAN KONTROLÜ (İLERİ RUNTIME)", "title": "Bölüm 4: Kalıcılık (Persistence), Checkpointer Mimarisi ve Kısa/Uzun Süreli Hafıza", "short_title": "Bölüm 4: Kalıcılık (Persistence), Checkpointer Mimarisi ve Kısa/Uzun Süreli Hafıza", "markdown": "## Bölüm 4: Kalıcılık (Persistence), Checkpointer Mimarisi ve Kısa/Uzun Süreli Hafıza\n\nModül 1'de kurduğumuz ajanlar zekiydi ama ölümcül bir kusurları vardı: **Program kapandığı (hatta tek bir `invoke` çağrısı bittiği) saniye her şeyi unutuyorlardı.**\n\nGerçek bir şirkette sabah konuştuğunuz çalışanınız öğleden sonra yanınıza gelip *\"Pardon, siz kimdiniz ve biz hangi projeyi yapıyorduk?\"* derse o şirket batar. İşte LangGraph'ı basit bir oyuncaktan kurumsal bir işletim sistemine dönüştüren katman **Persistence (Kalıcılık)** katmanıdır.\n\n---\n\n### 4.1 Checkpointer Nedir? (Video Oyunu \"Auto-Save\" Metaforu)\n\nZorlu bir bilgisayar oyunu oynadığınızı düşünün. Her bölümü geçtiğinizde ekranın köşesinde küçük bir disk simgesi döner: **\"Oyun Kaydedildi (Checkpoint Reached).\"** Elektrikler kesilse de, bilgisayarı kapatıp ertesi hafta açsanız da oyuna en baştan değil, tam o kapının önünden, cebinizdeki aynı altınlarla ve aynı can puanıyla devam edersiniz.\n\nLangGraph'ta **`Checkpointer`** tam olarak budur! Grafı derlerken ona bir kayıt motoru bağladığınızda (`workflow.compile(checkpointer=memory)`), LangGraph her **Süper Adım** bittiğinde beyaz tahtanın (`State`) eksiksiz bir fotoğrafını çeker, üzerine bir zaman damgası (`checkpoint_id`) vurur ve kasaya kilitler.\n\n---\n\n### 4.2 Üç Büyük Hafıza Kasası (Ve Klasörümüzdeki `.db-wal` Dosyalarının Sırrı!)\n\nİhtiyacınıza göre LangGraph'a üç farklı kasa takabilirsiniz (kodunuzda tek bir satır bile değiştirmeden!):\n\n| Kasa Türü | Günlük Hayat Karşılığı | Ne Zaman Kullanılır? |\n| :--- | :--- | :--- |\n| **`MemorySaver` (`InMemorySaver`)** | Okul sırasının üzerindeki karalama kağıdı. Zil çalıp program kapanınca çöpe gider (RAM'de yaşar). | Hızlı denemeler, eğitim testleri, geçici tek seferlik görevler. |\n| **`SqliteSaver`** | Evinizdeki veya ofisinizdeki çelik kasa (`.db` dosyası). Bilgisayar yeniden başlasa bile her şey yerindedir. | Masaüstü uygulamaları, kişisel danışman ajanlar, tek sunuculu projeler (`📂 01_hafizali_ajan.py`). |\n| **`PostgresSaver`** | Merkez Bankası'nın buluttaki dev mahzeni. Saniyede on binlerce okuma/yazmayı aynı anda kaldırır. | Gerçek müşterilere hizmet veren, birden fazla sunucuda çalışan kurumsal SaaS ve şirket sistemleri. |\n\n#### Klasörünüzde Gördüğünüz `checkpoints.db`, `-wal` ve `-shm` Dosyalarının İçinde Ne Var?\nProjemizde Modül 2, 3, 4 ve 5'i çalıştırdığımızda klasörlerinizde `checkpoints.db`, `checkpoints.db-wal` ve `checkpoints.db-shm` dosyaları oluştu. Bunların ne işe yaradığını bilmek size müthiş bir mühendislik özgüveni kazandırır:\n- **`checkpoints` tablosu:** Her adımın tam fotoğrafını, hangi oturuma (`thread_id`) ait olduğunu ve bir önceki fotoğrafın kimliğini (`parent_checkpoint_id`) tutar.\n- **`writes` tablosu:** O an paralel çalışan ustaların henüz birleştirilmemiş ara notlarını tutar. Bir usta hata verse bile diğer ustanın emeği yanmaz (**Hata Toleransı / Fault Tolerance**)!\n- **`.db-wal` (Write-Ahead Log) ve `.db-shm` (Shared Memory):** SQLite'ın yüksek hız modudur. Biri kasadan okuma yaparken diğerinin beklememesi için yeni kayıtlar önce yıldırım hızıyla `-wal` günlüğüne yazılır, ardından ana kasaya aktarılır.\n\n---\n\n### 4.3 `thread_id`: Çoklu Kullanıcı İzolasyonu (CEO Ahmet vs Muhasebeci Mehmet)\n\nŞimdi çok kritik bir soru soralım: *Şirketimizde tek bir LangGraph motoru çalışıyor ama aynı anda 100 farklı çalışan bu motorla konuşuyor. Birinin sırrı diğerine nasıl sızmıyor?*\n\nCevap: **`thread_id` (Oturum Anahtarı)**.\n\nBankadaki kiralık kasaları düşünün. Banka binası tektir (`app`), ama her müşterinin elinde kendi kasa numarasının anahtarı vardır (`thread_id`). `📂 01_hafizali_ajan.py` içinde canlı test ettiğimiz o çarpıcı senaryoyu hatırlayın:\n\n```python\nconfig_ahmet  = {\"configurable\": {\"thread_id\": \"oturum-ahmet-ceo\"}}\nconfig_mehmet = {\"configurable\": {\"thread_id\": \"oturum-mehmet-muhasebe\"}}\n```\n\n1. **Ahmet (CEO)** kendi anahtarıyla girip *\"Ben CEO Ahmet'im, gizli bütçemiz 5 Milyon TL\"* dedi.\n2. Hemen bir saniye sonra **Mehmet (Muhasebe)** kendi anahtarıyla aynı ajana *\"Ben kimim ve gizli bütçemiz ne?\"* diye sordu. Ajan: *\"Kendinizi henüz tanıtmadınız, herhangi bir bütçe bilgisine sahip değilim\"* dedi!\n3. **Ahmet** tekrar kendi anahtarıyla döndüğünde ise ajan onu ismen karşılayıp *5 Milyon TL* bütçeyi şak diye hatırladı!\n\n```mermaid\nflowchart TD\n    Ahmet[\"CEO Ahmet\\n(thread_id: oturum-ahmet-ceo)\"] --> Motor[\"Tekil LangGraph Ajan Motoru\"]\n    Mehmet[\"Muhasebeci Mehmet\\n(thread_id: oturum-mehmet-muhasebe)\"] --> Motor\n\n    subgraph Celik_Kasa [\"SQLite Veritabanı (checkpoints.db)\"]\n        Kasa1[(\"Kasa 1: Ahmet\\nCEO, Gizli Bütçe: 5M TL\")]\n        Kasa2[(\"Kasa 2: Mehmet\\nYeni Oturum, Bilgi Yok\")]\n    end\n\n    Motor <-->|\"Tam İzolasyon\"| Kasa1\n    Motor <-->|\"Tam İzolasyon\"| Kasa2\n```\n\n---\n\n### 4.4 Kısa Süreli Hafıza (`Checkpointer`) vs Uzun Süreli Hafıza (`LangGraph Store`)\n\nBurada çoğu eğitimin atladığı ama sizin **\"Kişisel Danışman Ajan\"** vizyonunuz için hayati olan bir ayrım vardır!\n\n`thread_id` ile çalışan **Checkpointer**, WhatsApp'taki **tek bir sohbet penceresinin** geçmişidir (Kısa Süreli / Oturum İçi Hafıza). Peki ya CEO Ahmet pazartesi günü `\"proje-alfa\"` sohbetini kapatıp salı günü `\"proje-beta\"` adında **yepyeni bir `thread_id`** başlatırsa ne olur? Yeni bir kasa açıldığı için ajan Ahmet'in raporları kısa ve maddeler halinde sevdiğini unutur!\n\nİşte LangGraph bu sorunu çözmek için **`Store` (Uzun Süreli / Oturumlar Arası Hafıza)** bileşenini sunar:\n- **Checkpointer (`thread_id` bazlı):** *\"Şu an üzerinde konuştuğumuz işin adımları neler?\"* (Çalışma Masası).\n- **LangGraph Store (`user_id` veya `company` isim alanı / namespace bazlı):** *\"Bu kullanıcı kimdir, huyu suyu nedir, geçmiş projelerde hangi dersleri çıkardık?\"* (Kalıcı Şirket Arşivi).\n\nBilişsel bilimden esinlenerek ajanlarınıza **3 tip Uzun Süreli Hafıza** kazandırabilirsiniz:\n1. **Semantik Hafıza (Gerçekler & Profil):** *\"Kullanıcı Python sever, IDE kullanmaz, bir Vibe Coder'dır, temiz alan adlarını tercih eder.\"*\n2. **Epizodik Hafıza (Anılar & Deneyimler):** *\"Geçen ay finans raporu hazırlarken enflasyon payını unutmuştuk ve kullanıcı düzeltmişti; bir dahaki sefere unutma.\"*\n3. **Prosedürel Hafıza (Öz-Evrimleşen Kurallar):** Ajanın zamanla kendi sistem talimatlarını (`System Prompt`) aldığı geri bildirimlere göre güncelleyip ustalaşması!\n\n---\n\n### 4.5 Şişen Hafıza Sorunu: Bağlam Penceresi Hijyeni (Context Hygiene)\n\nBir sohbet oturumu 300 mesaj sürerse ne olur? Her adımda 300 mesajın tamamını Gemini'ye tekrar göndermek hem yanıt süresini yavaşlatır, hem token maliyetini katlar, hem de modelin dikkatini dağıtır. Profesyonel LangGraph mimarları bunu 3 teknikle çözer:\n- **`trim_messages` (Kırpma):** Veritabanında her şeyi sakla ama modele sadece son 10 mesajı gönder.\n- **`RemoveMessage` (Cerrahi Silme):** Artık işimize yaramayan devasa ham araç çıktılarını beyaz tahtadan temizle.\n- **Özetleme Düğümü (Summarization Node):** Her 15 mesajda bir özel bir düğüm devreye girer, eski konuşmayı 3 cümlelik bir özete sıkıştırır (`summary` çekmecesine yazar) ve eski kalabalığı temizler. Böylece ajan **sonsuza kadar** düşük maliyetle ve keskin bir hafızayla konuşabilir!", "read_min": 5}, {"id": 5, "part": "KISIM III: ZAMAN, HAFIZA VE İNSAN KONTROLÜ (İLERİ RUNTIME)", "title": "Bölüm 5: Human-in-the-Loop (İnsan Onayı), `Command` Mekanizması ve Zamanda Yolculuk", "short_title": "Bölüm 5: Human-in-the-Loop (İnsan Onayı), `Command` Mekanizması ve Zamanda Yolculuk", "markdown": "## Bölüm 5: Human-in-the-Loop (İnsan Onayı), `Command` Mekanizması ve Zamanda Yolculuk\n\nOtonom bir ajan kurmak heyecan vericidir; ta ki ajanınız yanlış anlayıp tedarikçiye **150.000 TL yerine 1.500.000 TL** havale çıkarana veya üretim veritabanındaki müşteri tablosunu silene kadar!\n\nGerçek dünyada en değerli ajan, hiç durmadan koşturan ajan değil; **ne zaman durup sahibine sorması gerektiğini bilen ajandır.** Buna **Human-in-the-Loop (HITL — Döngüdeki İnsan)** denir.\n\n---\n\n### 5.1 Neden Basit Bir `input(\"Onaylıyor musunuz?\")` Kodu Kurumsal Hayatta Çalışmaz?\n\nAcemi yazılımcılar insan onayı almak için Python'un klasik konsol bekletme komutunu kullanmayı düşünür. Oysa gerçek bir web sunucusunda veya Slack botunda patronun o onay butonuna basması **5 dakika da sürebilir, 3 gün de sürebilir!**\n\nKlasik bir programı 3 gün boyunca RAM'de açık bekletirseniz sunucu kilitlenir, yeniden başlatılırsa her şey uçar. **LangGraph'ın mucizesi şudur:** Ajan duraklatıldığı saniye tüm hafızasını SQLite/Postgres kasasına yazar ve **işlemciyi tamamen serbest bırakıp uykuya yatar!** İster 10 saniye sonra, ister 10 gün sonra onay verin; LangGraph kasayı açar, kaldığı milisaniyeden uyanır ve işine devam eder!\n\n---\n\n### 5.2 İki Farklı Fren Pedalı: Kapıdaki Turnike vs İçeriden El Kaldırma\n\nLangGraph'ta bir ajanı durdurmanın iki zarif yolu vardır:\n\n#### 1. Statik Fren: `interrupt_before` (Kapının Önüne Turnike Koymak)\n`📂 01_hafizali_ajan.py` ve `📂 sirket_motoru.py` projelerimizde kullandığımız demir yumruk yöntemidir:\n\n```python\napp = workflow.compile(\n    checkpointer=memory,\n    interrupt_before=[\"Audit_Approval_Dept\"]  # Bu odaya girmeden HEMEN ÖNCE dondur!\n)\n```\n\nNe zaman akış bütçe departmanının veya araç düğümünün kapısına dayansa, turnike otomatik kapanır! Ajan sipariş fişini hazırlamıştır (`250.000 TL bütçe tahsis et`), ama fiş henüz işleme konulmamıştır.\n\n#### 2. Dinamik Fren: `interrupt()` Fonksiyonu (Düğümün İçinden El Kaldırmak)\nPeki ya *\"10.000 TL altındaki havaleleri sormadan yap, SADECE 10.000 TL üstündeyse durup patrona sor\"* demek isterseniz? Kapıdaki turnike (`interrupt_before`) her geleni durdurur. Buna karşılık modern LangGraph'ın **`interrupt()`** fonksiyonu düğümün **içinde** istediğiniz bir `if` koşulunda çalışır:\n\n```python\nif tutar > 10000:\n    onay = interrupt({\"soru\": f\"{tutar} TL gönderilsin mi?\"})\n```\n\nAjan sadece meblağ yüksekse elini kaldırıp dondurulur! Patron cevabını verdiğinde ise `Command(resume=\"Evet\")` komutuyla kaldığı satırdan yoluna devam eder.\n\n---\n\n### 5.3 İnsanın 4 Süper Yetkisi (Durmuş Bir Ajanla Neler Yapabilirsiniz?)\n\nGraf duraklatıldığında `snapshot = app.get_state(config)` diyerek röntgen filmini elinize alırsınız. `snapshot.next` size kapıda kimin beklediğini söyler. Bu noktada bir yönetici olarak 4 seçeneğiniz vardır:\n\n```mermaid\nstateDiagram-v2\n    [*] --> AjanKarari: \"150.000 TL Havale Hazırlandı\"\n    AjanKarari --> Duraklama: Fren Tuttu! (Graf Uykuda)\n    Duraklama --> Onay: \"1. Onayla (invoke None)\"\n    Duraklama --> Duzenle: \"2. Tutarı 80.000 TL Yap (update_state)\"\n    Duraklama --> Yonlendir: \"3. Başka Departmana Gönder (Command goto)\"\n    Duraklama --> Reddet: \"4. İptal Mesajı Enjekte Et\"\n    Onay --> Calistir: İşlem Gerçekleşir\n    Duzenle --> Calistir: Yeni Tutarla Gerçekleşir\n```\n\n1. **Olduğu Gibi Onayla:** `app.invoke(None, config)` dersiniz. Buradaki `None`, *\"Yeni bir soru sormuyorum, kapıyı aç, bekleyen işine devam et\"* demektir!\n2. **Beyaz Tahtayı Elle Değiştir (`update_state`):** Ajan 150.000 TL havale hazırlamış ama siz faturaya baktınız, doğrusu 80.000 TL! Ajanla tartışmak yerine doğrudan tahtaya uzanıp `app.update_state(...)` ile rakamı `80000` yaparsınız. Ajan uyandığında kendi kararının hep 80.000 TL olduğunu sanarak kusursuzca işlemi tamamlar! *(Hatta `as_node` parametresiyle tahtaya o notu hangi departman yazmış gibi görünmesini istediğinizi bile seçebilirsiniz.)*\n3. **Rotayı Değiştir (`Command` Nesnesi):** Modern LangGraph'ta hem tahtayı güncelleyip hem de trafik polisini atlayarak doğrudan başka bir düğüme sıçramak için **`Command(update={...}, goto=\"Researcher\")`** kullanılır. Bu, hem düğüm içinden hem de insan müdahalesinden kullanılabilen çok pratik bir \"İsviçre çakısı\"dır.\n4. **Reddet / Geri Çevir:** Tahtaya *\"Yönetici bu işlemi güvenlik nedeniyle reddetti\"* şeklinde bir mesaj bırakıp akışı tekrar ajana döndürürsünüz; ajan da müşteriye kibarca işlemin onaylanmadığını açıklar.\n\n---\n\n### 5.4 Time-Travel Debugging: Zaman Makinesi ve Paralel Evrenler (Forking)\n\nBilim kurgu filmlerindeki \"Çoklu Evren (Multiverse)\" teorisinin yazılımdaki birebir karşılığı LangGraph'ın **Time-Travel (Zamanda Yolculuk)** özelliğidir!\n\nModül 2'yi çalıştırdığımızda Ahmet'in oturumunda arka arkaya checkpoint kayıtlarının biriktiğini görmüştük. `app.get_state_history(config)` dediğinizde ajanın doğduğu andan bugüne kadarki **tüm film şeridi** önünüze serilir.\n\nDiyelim ki 10 adımlık karmaşık bir şirket görevinde ajan 4. adımda yanlış bir pazar verisine inandı ve kalan 6 adımda saçmaladı.\n- **Klasik sistemlerde:** Her şeyi çöpe atar, 1. adımdan baştan çalıştırır ve dua edersiniz.\n- **LangGraph'ta:** Film şeridini **3. adımdaki `checkpoint_id`'ye** geri sararsınız! Üstelik 3. adımdaki beyaz tahtada küçük bir düzeltme yapıp `invoke` tuşuna bastığınızda LangGraph eski geçmişi **silmez!** Tıpkı bir ağacın gövdesinden yeni bir dal çıkması gibi (**Forking / Dallandırma**), 3. adımdan itibaren **yeni bir paralel evren** başlatır!\n\n> [!NOTE]\n> **Neden Bu Bir Süper Güçtür?** Çünkü aynı müşteri senaryosunun 3. adımından itibaren *\"Ya bu adımı Gemini Flash yerine Pro modeline yaptırsaydık?\"* veya *\"Ya bütçeyi farklı verseydik?\"* diyerek ilk adımların parasını ve zamanını tekrar harcamadan saniyeler içinde A/B testi yapabilirsiniz!", "read_min": 4}, {"id": 6, "part": "KISIM IV: BİLGİ SİSTEMLERİ, EKİP MİMARİLERİ VE OTONOM ŞİRKET", "title": "Bölüm 6: Kopyala-Yapıştırın Sonu — Modern RAG, Agentic RAG, MCP ve Dinamik Beceriler", "short_title": "Bölüm 6: Kopyala-Yapıştırın Sonu — Modern RAG, Agentic RAG, MCP ve Dinamik Beceriler", "markdown": "## Bölüm 6: Kopyala-Yapıştırın Sonu — Modern RAG, Agentic RAG, MCP ve Dinamik Beceriler\n\nSohbetlerimiz sırasında geleceğe dair kurduğunuz şu cümle, modern yapay zeka mühendisliğinin en can alıcı noktasını özetliyordu:\n> *\"Gemini'yi RAG mimarisiyle kullanma fikrim var ama... her şey için sürekli kopyala-yapıştır yapmak berbat bir fikir, yani modern değil :)\"*\n\nKesinlikle haklısınız! 2026 dünyasında dokümanları elle kopyalayıp sohbet kutusuna yapıştırmak, araba varken kağnıyla yük taşımaya benzer. Gelin bir ajanın şirketinizin binlerce belgesine, kod deposuna ve canlı veritabanlarına **sıfır kopyala-yapıştır** ile nasıl bağlandığını en sade haliyle çözelim.\n\n---\n\n### 6.1 RAG (Retrieval-Augmented Generation) İnsan Dilinde Nedir?\n\nKavanozdaki dahi profesörümüzü (LLM) hatırlayın. Dünya tarihini bilir ama **sizin şirketinizin dün imzaladığı sözleşmeyi bilmez.** Ona bu sözleşmeyle ilgili soru sormanın iki yolu vardır:\n\n1. **İlkel Yol (Her Şeyi Tıkıştırmak):** Şirketteki 5.000 sayfalık tüm PDF'leri her soruda modele baştan okutmak. Sonuç? Tek bir soru 40 saniye sürer, servet harcar ve model samanlıkta iğneyi kaçırır (*\"Lost in the Middle\"* sendromu).\n2. **Modern Yol — RAG (Açık Kitap Sınavı):** Öğrenciye tüm kütüphaneyi ezberletmezsiniz. Sınavda soru geldiğinde akıllı bir kütüphaneci koşar, 5.000 sayfanın içinden **sadece o soruyla ilgili olan 3 paragrafı** cımbızla çekip öğrencinin sırasına koyar. Öğrenci de o 3 paragrafa bakarak sıfır halüsinasyonla cevabı yazar!\n\n#### Kütüphaneci Doğru Paragrafı Nasıl Bulur? (Embeddings & Vektör Veritabanı)\nKlasik arama (`Ctrl + F`) kelime eşleştirir: Siz *\"Ücret iadesi\"* aratırsınız, belgede *\"Para geri ödemesi\"* yazdığı için bulamaz!\n\nRAG ise kelimeleri değil **anlamları** arar:\n1. **Parçalama (`Chunking`):** Uzun belgeler anlamlı paragraflara bölünür.\n2. **Anlam Koordinatı (`Embedding`):** Özel bir model her paragrafı uzayda bir koordinata (sayı dizisine) çevirir. Bu haritada *\"Kral\"* ile *\"Hükümdar\"*, *\"Ücret iadesi\"* ile *\"Para geri ödemesi\"* yan yana mahallelere düşer!\n3. **Vektör Veritabanı (`Chroma`, `Qdrant`, `pgvector`, `Vertex AI Vector Search`):** Bu anlam haritasını saklayan özel kütüphanedir. Soru geldiğinde haritada en yakın 3 komşu paragraf milisaniyeler içinde çekilir.\n\n---\n\n### 6.2 Klasik RAG vs Agentic RAG (LangGraph Farkı!)\n\nPeki kütüphanecinin ilk getirdiği 3 paragraf alakasız çıkarsa ne olur?\n- **Klasik RAG (Düz Zincir / DAG):** Kör bir boru hattıdır. Kütüphaneci yanlış sayfayı getirse bile model o yanlış sayfadan cevap uydurmaya çalışır!\n- **Agentic RAG / Corrective RAG (LangGraph Döngüsü):** LangGraph'ta bilgi arama işlemi kör bir boru değil, **denetlenen bir döngüdür!**\n\n```mermaid\nflowchart LR\n    Soru([\"Kullanıcı Sorusu\"]) --> Ara[\"Vektör Kütüphanesinde Ara\"]\n    Ara --> Hakem{\"Belge Kalite Hakemi:\\nAlakalı mı?\"}\n    Hakem -->|\"Evet, Tam İsabet\"| Cevap([\"Kanıtlı Cevap Üret\"])\n    Hakem -->|\"Hayır, Yetersiz!\"| YenidenYaz[\"Soruyu Yeniden Formüle Et\\nveya Web Araması Yap\"]\n    YenidenYaz --> Ara\n```\n\nGördünüz mü? LangGraph ajanı bulduğu belgeyi beğenmezse kendi arama terimini değiştirip kütüphaneye **ikinci kez** dalar, orada da bulamazsa canlı internete (`Tavily` / `Google Search`) çıkar! İşte buna **Kendi Kendini Düzelten RAG (Corrective / Self-RAG)** denir.\n\n---\n\n### 6.3 MCP (Model Context Protocol): Yapay Zekanın \"USB-C\" Girişi\n\nEskiden her telefon markasının şarj ucu farklıydı; çekmecelerimiz kablo çöplüğüydü. Sonra **USB-C** çıktı ve tek bir standart fişle her cihaz birbirine bağlandı.\n\nYapay zeka dünyasında **MCP (Model Context Protocol)** tam olarak o **evrensel USB-C girişidir!**\n- Eskiden ajanınızı Google Drive'a bağlamak için ayrı kod, GitHub için ayrı kod, Slack için ayrı kod, yerel klasörleriniz için ayrı kod yazardınız.\n- Bugün ise bu servislerin hepsi hazır **MCP Sunucuları (MCP Servers)** sunar. LangGraph'ın `langchain-mcp-adapters` köprüsü sayesinde ajanınıza tek satırla *\"Bilgisayarımdaki proje klasörünü, GitHub repomu ve şirket veritabanımı MCP üzerinden bağla\"* dersiniz. Siz tek bir kopyala-yapıştır yapmadan, danışman ajanınız canlı dosyalarınızı kendisi okur ve her şeyden anında haberdar olur!\n\n---\n\n### 6.4 Dinamik Beceriler (`Skills`) ve Kademeli Açığa Çıkarma (`Progressive Disclosure`)\n\nBu kursu başlatırken yaptığımız ilk ve en zekice hamleyi hatırlayın: Kursa başlamadan önce `📂 `.agents/skills/`` klasörüne **5 ayrı uzmanlık becerisi (`SKILL.md`)** yerleştirdik. Ve o sırada iki muazzam soru sormuştunuz:\n1. *\"Skiller nasıl tetikleniyor?\"*\n2. *\"Peki birden fazla skille uyuşursa ne yapıyor?\"*\n\nBu sistemin arkasındaki mimari ilkenin adı **Progressive Disclosure (Kademeli Açığa Çıkarma)**'dır ve bunu hem asistan kullanırken hem de **kendi LangGraph ajanlarınızı tasarlarken** bilmeniz altın değerindedir:\n\n- **Nasıl Tetiklenir?** Bir ajana 50 tane 10 sayfalık kullanma kılavuzunu baştan okutursanız beyni yanar ve token kotanız ilk dakikada biter. Onun yerine ajan başlangıçta her becerinin sadece **2 cümlelik yaka kartını (`name` ve `description`)** görür. Ne zaman siz *\"Hadi LangSmith ile maliyet izleyelim\"* derseniz, ajan yaka kartlarına bakar, sadece `📂 langsmith-observability` dosyasının kapağını açıp içindeki detaylı talimatları o an okur!\n- **Birden Fazla Beceri Eşleşirse Ne Olur?**\n  - **Tamamlayıcıysa (İşbirliği):** Örneğin *\"Eğitmen gibi davranarak Supervisor ekibi kur\"* dediğinizde, hem `📂 langgraph-curriculum-mentor` (Nasıl öğreteceği) hem de `📂 langgraph-multi-agent-architectures` (Nasıl mimari kuracağı) becerilerini **aynı anda** okur ve harmanlar.\n  - **Çakışıyorsa (Öncelik Hiyerarşisi):** Aynı isimli hem genel bilgisayarınızda (Global) hem de proje klasörünüzde (Workspace) iki kural varsa, **her zaman en yerel olan (Proje içi kural)** genel kuralı ezer!", "read_min": 4}, {"id": 7, "part": "KISIM IV: BİLGİ SİSTEMLERİ, EKİP MİMARİLERİ VE OTONOM ŞİRKET", "title": "Bölüm 7: Tek Beyinden Orkestraya — 6 Çoklu Ajan Deseni, Subgraph'lar ve `Send` API", "short_title": "Bölüm 7: Tek Beyinden Orkestraya — 6 Çoklu Ajan Deseni, Subgraph'lar ve `Send` API", "markdown": "## Bölüm 7: Tek Beyinden Orkestraya — 6 Çoklu Ajan Deseni, Subgraph'lar ve `Send` API\n\nBir şirketi tek bir kişinin yönettiğini hayal edin: Sabah pazar araştırması yapıyor, öğlen Python kodu yazıyor, ikindi vakti muhasebe defteri tutuyor, akşam müşteri telefonlarına bakıyor... Bir süre sonra telefonları karıştırır, yanlış faturayı öder ve tükenir!\n\nYapay zekada da **tek bir ajana 25 farklı araç ve 5 sayfalık sistem talimatı yüklediğinizde (\"God Agent\" sendromu)** şu üç felaket yaşanır:\n1. **Bağlam Kirliliği (`Context Bloat`):** Araştırma sırasındaki uzun ham metinler kod yazma aşamasında modelin dikkatini dağıtır.\n2. **Araç Karmaşası (`Tool Confusion`):** Seçenek sayısı arttıkça modelin yanlış aracı seçme ihtimali katlanarak artar.\n3. **Kişilik Bölünmesi:** İyi bir beyin fırtınası ajanı *yaratıcı ve esnek* (`temperature=0.7`) olmalıdır; iyi bir finans denetçisi ise *şüpheci ve sıfır toleranslı* (`temperature=0.0`) olmalıdır. Tek bir model aynı anda ikisi birden olamaz!\n\nÇözüm: **İşi uzmanlara bölmek (Multi-Agent Architectures).** LangGraph dünyasında bilmeniz gereken **6 temel ekip deseni** vardır:\n\n---\n\n### Desen 1: Yansıma / Eleştirmen İkilisi (`Reflection` / `Evaluator-Optimizer`)\nİlk dersimiz `📂 01_merhaba_langgraph.py` içinde tohumunu attığımız modeldir. Bir ajan üretir (Yazar/Kodlayıcı), ikinci ajan acımasız bir kalite kontrolcü gibi inceler (Eleştirmen). Kalite barajı geçilmediyse düzeltme notlarıyla birinci ajana geri gönderir!\n\n### Desen 2: Merkezi Yönetici (`Supervisor Pattern`)\nModül 3'teki `📂 01_supervisor_ekibi.py` projemizin tam kalbidir. Ortada elini koda veya aramaya sürmeyen bir **Proje Yöneticisi (`Supervisor`)** oturur:\n- İşi inceler, `RouteDecision` formuyla `\"Researcher\"` uzmanına paslar.\n- **Altın Kural (Geri Raporlama Döngüsü):** Araştırmacı işini bitirince doğrudan yazılımcıya gitmez; raporuyla birlikte **tekrar Yöneticinin masasına döner!** Yönetici raporu okur, tatmin olduysa bu kez `\"Coder\"` uzmanını görevlendirir. Her şey tamamsa `\"FINISH\"` mührünü basar.\n\n### Desen 3: Hiyerarşik Ekipler ve Alt Graflar (`Hierarchical Teams & Subgraphs`)\nŞirketiniz büyüdü ve artık 2 değil, 15 uzman ajanınız var! Tek bir CEO 15 kişinin hepsini tek tek yönetmeye kalkarsa yine darboğaz oluşur.\n\nİşte burada **Subgraph (Alt Graf)** mucizesi devreye girer:\n- Araştırma Departmanını kendi içinde 3 ajanlı ayrı bir `StateGraph` olarak kurup derlersiniz (`research_subgraph`).\n- Mühendislik Departmanını kendi içinde Yazılımcı + Testçi olarak ayrı bir `StateGraph` yapıp derlersiniz (`engineering_subgraph`).\n- Sonra bu koca departmanların her birini, **CEO'nun ana grafına sanki tek birer düğümmüş gibi (`add_node`) takarsınız!**\n\n```mermaid\nflowchart TD\n    CEO[\"👑 CEO (Üst Yönetici Grafı)\"]\n    CEO --> ArastirmaDep[\"🔬 Araştırma Departmanı (Subgraph)\"]\n    CEO --> MuhendislikDep[\"💻 Mühendislik Departmanı (Subgraph)\"]\n    CEO --> DenetimDep[\"🛡️ Finans ve Onay Departmanı (Subgraph)\"]\n\n    subgraph Arastirma_Ic [\"Araştırma Alt Grafının İçi\"]\n        WebAra[\"Web Tarayıcı\"] --> Ozetci[\"Rapor Özetleyici\"]\n    end\n\n    subgraph Muhendislik_Ic [\"Mühendislik Alt Grafının İçi\"]\n        Mimar[\"Kod Yazıcı\"] --> Testci[\"Birim Test Uzmanı\"]\n    end\n\n    ArastirmaDep -.-> Arastirma_Ic\n    MuhendislikDep -.-> Muhendislik_Ic\n```\n\n#### Çok Kritik Mimari Sır: Özel Müsvedde Defteri vs Ortak Yönetim Kurulu Klasörü!\nBir departmanın (Subgraph) kendi içindeki 20 adımlık tartışmasını, karalamalarını ve hata denemelerini CEO'nun ana panosuna (`CompanyState`) olduğu gibi dökerseniz CEO'nun kafası karışır!\nLangGraph'ta her alt grafın **kendi özel State'i (Private State)** olabilir (hatta giriş ve çıkış kapılarına `input` ve `output` şemaları konabilir). Departman içeride 10 tur tartışır, ama kapıdan çıkarken CEO'nun masasına **sadece tertemiz 1 paragraflık nihai sonucunu** bırakır!\n\n---\n\n### Desen 4: Sürü ve Eşler Arası Bayrak Yarışı (`Swarm` / `Handoffs`)\nHer zaman tepede bir müdür olmasına gerek yoktur! Çağrı merkezini düşünün: Telefonu ilk olarak **Karşılama Ajanı** açar. Sorunun teknik olduğunu anlayınca `Command(goto=\"Teknik_Uzman\")` diyerek telefonu doğrudan uzman arkadaşına aktarır; bir sonraki mesajınızda artık doğrudan Teknik Uzman sizinle konuşur! Yöneticisiz, ultra hızlı bayrak yarışıdır (`langgraph-swarm`).\n\n### Desen 5: Paralel Dağıt-Topla (`Map-Reduce` ve `Send` API)\nDiyelim ki CEO'ya *\"Türkiye'deki en büyük 8 e-ticaret rakibimizi aynı anda analiz et\"* dediniz. 8 rakibi sırayla tek tek araştırmak 8 kat uzun sürer!\nLangGraph'ın **`Send` API** özelliği sayesinde bir yönlendirici düğüm, çalışma anında dinamik olarak **8 adet paralel Araştırmacı kopyası** fırlatır! Sekizi de aynı saniyede farklı bir rakibi inceler, sonuçlar ortak bir `Annotated[list, operator.add]` çekmecesinde toplanır (`Reduce`) ve tek bir sentez raporuna dönüşür.\n\n### Desen 6: Planla ve Yürüt (`Plan-and-Execute`)\nMaliyet ve hız optimizasyonunun zirvesidir:\n1. En başta en zeki (ve nispeten pahalı) stratejist model devreye girer ve 5 maddelik net bir iş planı çıkarır.\n2. Ardından çok hızlı ve ekonomik `Flash` modelleri bu maddeleri sırayla eritir. Her adımda koca stratejist modeli yormadığınız için hem hız uçar hem maliyet düşer!", "read_min": 4}, {"id": 8, "part": "KISIM IV: BİLGİ SİSTEMLERİ, EKİP MİMARİLERİ VE OTONOM ŞİRKET", "title": "Bölüm 8: Vaka Analizi — Kurduğumuz \"Otonom Ajan Şirketi\"nin Adım Adım Röntgeni", "short_title": "Bölüm 8: Vaka Analizi — Kurduğumuz \"Otonom Ajan Şirketi\"nin Adım Adım Röntgeni", "markdown": "## Bölüm 8: Vaka Analizi — Kurduğumuz \"Otonom Ajan Şirketi\"nin Adım Adım Röntgeni\n\nŞimdi tüm bu parçaların büyük final projemiz olan `📂 sirket_motoru.py` içinde nasıl tek bir saat mekanizması gibi birleştiğine kuşbakışı bakalım.\n\nBu dosyada aslında gerçek bir teknoloji şirketinin minyatür bir ikizini inşa ettik:\n\n1. **Akıllı Şirket Panosu (`CompanyState`):**\n   Panomuzda sadece sohbet geçmişi (`messages`) tutmadık! Yanına kurumsal durum bayrakları ekledik:\n   - `research_summary` (Pazar raporu hazır mı?)\n   - `code_deliverable` (Üretim kodu yazıldı mı?)\n   - `allocated_budget` (Tahsis edilen bütçe ne kadar?)\n   - `is_audit_passed` (Finans ve insan denetiminden geçti mi?)\n   *Neden?* Çünkü CEO karar verirken 50 mesajlık sohbeti okuyup *\"Acaba kod yazılmış mıydı?\"* diye tahmin yürütmek zorunda kalmaz; doğrudan durum panosundaki yeşil/kırmızı ışıklara bakar!\n\n2. **Hibrit CEO Orkestrasyonu (`ceo_supervisor_node`):**\n   Yönetim Kurulu *\"Bulut Tabanlı Otonom Müşteri Destek Sistemi projesini başlatın\"* direktifini verdiğinde ilk CEO uyanır. Panoya bakar: Araştırma eksik! `CEORouteDecision` şemasıyla gerekçesini yazarak görevi `Research_Dept` departmanına havale eder.\n\n3. **Uzman Departmanların Teslimatı:**\n   - **Araştırma Departmanı** pazar istihbarat aracını çalıştırır, %85 büyüme ve regülasyon gereksinimlerini raporlayıp `research_summary` ışığını yeşile çevirir ve sözü tekrar CEO'ya bırakır.\n   - **CEO** ikinci kez uyanır: Araştırma tamam, sıra Mühendislikte!\n   - **Mühendislik Departmanı** pazar raporunu okur, kurumsal servis sınıfını üretir, `code_deliverable` ışığını yeşile çevirir ve CEO'ya döner.\n\n4. **Büyük Güvenlik Freni (`interrupt_before=[\"Audit_Approval_Dept\"]`):**\n   CEO üçüncü kez uyanır: Kod da hazır, artık sıra 250.000 TL bütçe tahsis edecek Finans/Denetim departmanında! Ancak şirket anayasamız (`compile`) der ki: **İnsan Yönetim Kurulu Başkanı onaylamadan tek kuruş bütçe bloke edilemez!**\n   Graf kapıda donar ve tüm durumu `enterprise.db` çelik kasasına kilitler.\n\n5. **İnsan Onayı ve Kapanış:**\n   Yönetim Kurulu Başkanı (Siz) tamamlanan kodu ve talep edilen 250.000 TL bütçeyi ekranda görür, onay mührünü basar (`app.invoke(None, config)`). Finans departmanı bütçeyi tahsis eder (`BGT-8842`), CEO son kez uyanıp üç yeşil ışığı da görür ve `FINISH` kararıyla resmi kapanış bildirisini yayınlar!\n\n### 8.1 Terminalden Kurumsal Kokpite: `yonetici_masasi.py` (Executive Management Desk)\n\nGerçek bir şirket sahibi terminale siyah-beyaz komutlar yazarak şirket yönetmez; karşısında temiz bir **Yönetim Kurulu Masası** ister. Kök dizindeki `📂 yonetici_masasi.py` (`📂 yonetici_masasi_baslat.bat` ile tek tıkla açılan Streamlit kokpitimiz), arka plandaki tüm LangGraph kavramlarının gerçek bir üründe nasıl somutlaştığını gösteren kusursuz bir vitrindir:\n\n- **1. Sekme (CEO İletişim ve Canlı HITL Onay Kartı):** Arka planda graf `interrupt_before=[\"Audit_Approval_Dept\"]` kuralıyla durakladığı an, kokpitte kırmızı çerçeveli **\"🛑 YÖNETİCİ ONAYI BEKLENİYOR\"** kartı belirir. Sizin `[✅ 250.000 TL Şirket Bütçesini ONAYLA]` butonuna tıklamanız, perde arkasında `sirket_motoru.app.invoke(None, config=config)` komutunu tetikleyerek uykudaki grafı uyandırır!\n- **2. Sekme (Elle Tutulur Teslimatlar / Tangible Deliverables):** `CompanyState` içinde ayrı çekmecelerde tuttuğumuz `research_summary`, `allocated_budget` ve `code_deliverable` alanları burada indirilebilir resmi dokümanlara (`.md` pazar raporu, `.txt` bütçe tahsis sertifikası ve `.py` üretim mikroservisi) dönüşür.\n- **3. Sekme (Kodsuz SQLite ve Time-Travel Denetçisi):** `enterprise.db` içindeki tüm geçmiş projeleri (`thread_id`), her projenin kaç checkpoint adımından oluştuğunu ve `get_state_history()` ile çekilen adım adım zaman çizelgesini tek bir SQL sorgusu bile yazmadan canlı tabloda önünüze serer!\n- **4. Sekme (Departman Matrisi & Şirket Radarı):** Aktif model, `.env` içindeki anahtar havuzu kapasitesi ve 4 departmanın yetki sınırlarını tek ekranda özetler.", "read_min": 3}, {"id": 9, "part": "KISIM V: GÖZLEMLENEBİLİRLİK, ÜRETİM MÜHENDİSLİĞİ VE TÜM EKOSİSTEM", "title": "Bölüm 9: Kör Uçuşun Sonu — LangSmith, Run Tree, Maliyet/Gecikme ve Kalite Sınavları", "short_title": "Bölüm 9: Kör Uçuşun Sonu — LangSmith, Run Tree, Maliyet/Gecikme ve Kalite Sınavları", "markdown": "## Bölüm 9: Kör Uçuşun Sonu — LangSmith, Run Tree, Maliyet/Gecikme ve Kalite Sınavları\n\nGeleneksel bir e-ticaret sitesinde bir şeyler bozulduğunda sunucu size kıpkırmızı bir **`500 Internal Server Error`** fırlatır; hatanın hangi satırda olduğunu saniyesinde görürsünüz.\n\nPeki 5 departmanlı bir yapay zeka şirketinde **en korkutucu hata** nedir?\nSunucunun **`200 OK` (Her şey harika!)** döndürmesi, ama içeride Araştırmacı ile Yazılımcı ajanın birbirini yanlış anlayıp 12 tur kısır döngüye girmesi, faturanıza sessizce para yazması ve en sonunda müşteriye **son derece kibar bir Türkçeyle tamamen uydurma bir cevap** vermesidir!\n\nİşte olasılıksal sistemlerde gözlemlenebilirlik (**Observability**) bir lüks değil, uçağın kokpitindeki radar ekranıdır. Radarsız uçan çoklu ajan sistemi **kör uçuş** yapıyordur.\n\n---\n\n### 9.1 LangSmith Nedir ve Sıfır Kod Değişikliğiyle Nasıl Çalışır?\n\n**LangSmith**, LangGraph'ı üreten ekibin geliştirdiği bilişsel röntgen ve kalite kontrol platformudur. En güzel yanı şudur: Mevcut graf kodunuzun içine tek bir satır bile izleme kodu yazmanıza gerek yoktur! Sadece `.env` dosyanızdaki şalteri kaldırırsınız:\n\n```bash\nLANGCHAIN_TRACING_V2=\"true\"\nLANGCHAIN_API_KEY=\"lsv2_pt_...\"\nLANGCHAIN_PROJECT=\"otonom-ajan-sirketi\"\n```\n\nBu şalter kalktığı anda LangGraph arka planda gerçekleşen **her düşünceyi, modele giden gizli sistem mesajlarını, seçilen araçları, harcanan milisaniyeleri ve kuruşu kuruşuna token maliyetini** asenkron olarak LangSmith paneline çizer.\n\n*(Üstelik `📂 01_langsmith_izleme.py` ve `📂 langsmith_atolyesi.ipynb` içinde kurduğumuz akıllı koruma sayesinde, bulut anahtarınız tanımlı değilse sistem 401 hatası verip çökmez; otomatik olarak **Yerel Telemetri Moduna** geçip kendi metrik tablosunu üretir!)*\n\n---\n\n### 9.2 Run Tree (Çalışma Ağacı) Okuma Sanatı\n\nLangSmith'te müşterinin sorduğu tek bir sorudan nihai cevaba kadar geçen tüm yolculuğa **Trace (İz)**, bu yolculuğun içindeki her bir basamağa ise **Run (Adım / Span)** denir. Bunlar alt alta düz satırlar halinde değil, bir **Soy Ağacı (`Run Tree`)** şeklinde dizilir:\n\n```mermaid\nflowchart TD\n    Root[\"📍 Root Run: StateGraph Invoke (Toplam: 2.4 sn)\"]\n    Root --> Adim1[\"🤖 1. Agent Düğümü: Gemini Düşündü (0.9 sn)\\nKarar: 2 aracı paralel çağır!\"]\n    Root --> Adim2[\"🔧 2. ToolNode Mutfağı (0.7 sn)\"]\n    Adim2 --> T1[\"audit_system_logs (0.3 sn)\"]\n    Adim2 --> T2[\"calculate_cost_projection (0.4 sn)\"]\n    Root --> Adim3[\"🤖 3. Agent Düğümü: Nihai Rapor Sentezi (0.8 sn)\"]\n```\n\nBu ağaca 3 saniye bakan bir mimar şunu şak diye görür:\n- *\"Neden ajan bu soruda yanlış aracı seçti?\"* -> `Adim1`'e tıklarsınız, o an modele giden tam metni ve araç kataloglarını harfi harfine okursunuz (**Bilişsel Takip / Cognitive Tracing**).\n- *\"Neden cevap gecikti?\"* -> Şelale (`Waterfall`) çubuklarına bakarsınız; gecikmenin yapay zekadan mı yoksa yavaş çalışan bir veritabanı aracından mı kaynaklandığını anında yakalarsınız!\n\n---\n\n### 9.3 Kurumsal Etiketleme (`tags` & `metadata`) ve Vibe Coder Stüdyosu\n\nŞirketinizde günde 10.000 ajan çalışması gerçekleştiğinde bunları birbirinden nasıl ayıracaksınız? Grafı çağırırken `config` çantasına taktığınız etiketlerle:\n- **`tags` (`[\"production\", \"q4-audit\", \"infra-team\"]`):** Hızlı filtreleme rozetleridir. Tek tıkla sadece canlı ortamdaki denetim sorgularını süzersiniz.\n- **`metadata` (`{\"cost_center\": \"Engineering-Ops\", \"user_tier\": \"VIP\"}`):** Ay sonunda *\"Mühendislik departmanının ajanları bu ay kaç dolar yaktı?\"* sorusunun muhasebe fişidir!\n\n#### Kendi Canlı Gözlem Evimiz: `BaseCallbackHandler` ve Vibe Coder Atölyeleri\nModül 4'te *\"IDE kullanmıyorum, notlarımı da alabileceğim görsel bir atölye ve temiz URL'ler istiyorum\"* dediğinizde deneyimlediğimiz `📂 langsmith_atolyesi.ipynb` (`📂 atolye_baslat.bat`) iki harika tekniği öğretti:\n1. **`BaseCallbackHandler`:** LangGraph'ın içine taktığımız canlı mikrofon! Model düşünmeye başladığı an (`on_llm_start`) ve araç tetiklendiği an (`on_tool_start`) sinyali yakalayıp ekrana canlı akıtır.\n2. **Temiz Yerel Alan Adları (`lvh.me` İpucu):** Yerel web stüdyolarında çirkin `localhost:port` adresleri yerine Port 80 üzerinde `http://atolye.lvh.me` gibi okunaklı adresler kullanabilirsiniz; çünkü `lvh.me` dünyadaki tüm alt alan adlarını otomatik olarak sizin kendi bilgisayarınıza (`127.0.0.1`) yönlendiren geliştirici dostu küresel bir DNS standardıdır!\n\n---\n\n### 9.4 LangSmith'in Gizli Süper Gücü: Kalite Sınavları (`Datasets & Evals`)\n\nÇoğu kişi LangSmith'i sadece bir \"log ekranı\" sanır. Oysa LangSmith'in asıl kurumsal gücü **Değerlendirme (`Evaluation / Evals`)** motorudur!\n\nDiyelim ki CEO ajanınızın sistem talimatında iki kelimeyi değiştirdiniz. Bu değişikliğin ajanı daha mı zeki yaptığını yoksa başka sorularda bozduğunu nasıl bileceksiniz? Göz kararı 2 soru sorup *\"İyi görünüyor\"* demek rus ruletidir!\n\nProfesyonel akış şöyle işler:\n1. **Altın Veri Seti (`Dataset`):** Geçmişteki en zorlu 50 müşteri sorusunu LangSmith'te bir sınav kitapçığına kaydedersiniz.\n2. **Otomatik Sınav ve `LLM-as-a-Judge` (Hakem Yapay Zeka):** Yeni ajanınızı bu 50 soruluk sınava sokarsınız. Başka bir bağımsız \"Hakem Model\", ajanınızın cevaplarını doğruluk, üslup ve halüsinasyon açısından 100 üzerinden puanlar!\n3. **İnsan Geri Bildirimi (`Feedback`):** Arayüzünüzdeki 👍 / 👎 butonlarını `client.create_feedback(run_id=...)` ile doğrudan o yanıta bağlarsınız. Beğenilmeyen yanıtlar otomatik olarak inceleme kuyruğuna (`Annotation Queue`) düşer ve bir sonraki sınav kitapçığınızın yeni sorusu olur!", "read_min": 4}, {"id": 10, "part": "KISIM V: GÖZLEMLENEBİLİRLİK, ÜRETİM MÜHENDİSLİĞİ VE TÜM EKOSİSTEM", "title": "Bölüm 10: Saha Dersleri — Kotalar, Anahtar Rotasyonu, 20x Hızlandırma ve Kurumsal Güvenlik", "short_title": "Bölüm 10: Saha Dersleri — Kotalar, Anahtar Rotasyonu, 20x Hızlandırma ve Kurumsal Güvenlik", "markdown": "## Bölüm 10: Saha Dersleri — Kotalar, Anahtar Rotasyonu, 20x Hızlandırma ve Kurumsal Güvenlik\n\nBu bölüm, kitapların teorik sayfalarında bulamayacağınız; bizzat projeyi inşa ederken karşılaştığımız duvarlardan ve sorduğunuz keskin sorulardan çıkardığımız **gerçek dünya mühendislik dersleridir.**\n\n---\n\n### Ders 1: Neden Kişisel Yapay Zeka Aboneliğiniz API Kotasını Etkilemez?\n\nSorduğunuz en önemli sorulardan biri şuydu:\n> *\"Google AI (Gemini Advanced / Google One) aboneliğimi yükseltmem API kullanım limitimi artırır mı? Ve projede kota bittiğinde seninle nasıl hala konuşabiliyorum?\"*\n\nÇünkü teknoloji devlerinde **Tüketici Dünyası** ile **Geliştirici/Bulut Dünyası** tamamen ayrı iki binadır:\n- **Bina 1 — Tüketici Aboneliği (`gemini.google.com`):** Aylık sabit ücret ödeyip tarayıcıdan sohbet ettiğiniz bireysel üründür. Kendi sabit kotası vardır ve kodlarınızda kullandığınız `GOOGLE_API_KEY` ile **hiçbir organik bağı yoktur.**\n- **Bina 2 — Geliştirici API ve Kurumsal Bulut (`Google AI Studio` / `Vertex AI`):** Kullandığın kadar öde (`Pay-as-you-go`) veya ücretsiz geliştirici katmanıyla çalışan, yazılımların bağlandığı altyapıdır.\n\n---\n\n### Ders 2: Kotalar \"API Anahtarı\" Başına Değil, \"Proje\" Başınadır!\n\nÜcretsiz katmanda kota duvarına (`429 RESOURCE_EXHAUSTED`) çarptığımızda şu zekice fikri ortaya atmıştınız: *\"Birden fazla API anahtarı tanımlasak ve biri bitince diğerine geçse?\"* Ve hemen ardından şu kritik soruyu sormuştunuz: *\"Aynı projede farklı key'ler açmak yeterli olur mu, yoksa farklı projeler mi kurmalıyım?\"*\n\n**Altın Kural:** Google Cloud ve AI Studio'da hız ve kullanım limitleri;\n- **`RPM` (Requests Per Minute):** Dakikadaki istek sayısı,\n- **`TPM` (Tokens Per Minute):** Dakikadaki kelime/token hacmi,\n- **`RPD` (Requests Per Day):** Günlük toplam istek hakkı,\n\n**API anahtarı başına değil, PROJE (`Project`) başına tanımlanır!** Aynı projenin içinde 50 tane anahtar açmak, tek bir su deposuna 50 tane musluk takmaya benzer; depo bitince 50 musluk da aynı anda kurur! Gerçek bir anahtar havuzu için her anahtarın **farklı bir projeye** bağlı olması şarttır. *(Ayrıca güncel Google altyapısında yeni nesil anahtarların klasik `AIza...` formatının yanı sıra `AQ...` formatında da üretilebildiğini canlı testlerimizde bizzat doğruladık!)*\n\n---\n\n### Ders 3: Model Düşürmek (`Fallback`) vs Anahtar Döndürmek (`Key Rotation`)\n\n`📂 model_factory.py` dosyamızı tasarlarken iki farklı dayanıklılık mimarisini test ettik:\n1. **Model Şelalesi (Model Fallback):** Ana model kota verirse daha küçük/ucuz bir alt modele (`flash-lite`) düşmek. Maliyet dostudur ama karmaşık görevlerde ajanın zeka seviyesinde dalgalanma yaratabilir.\n2. **Sabit Model + Dinamik Anahtar Havuzu (`KeyRotatingGeminiLLM`):** Sizin tercihinizle geçtiğimiz nihai mimari! Model zekasından **asla ödün vermez** (daima hedeflediğimiz güçlü model sabit kalır); bir anahtar kota veya yoğunluk sinyali verdiği milisaniyede `.env` dosyasındaki `GOOGLE_API_KEYS` havuzundan sıradaki temiz anahtara geçer! Üstelik `.env` dosyasına ileride 6., 7. veya 10. anahtarı eklediğinizde koda tek bir dokunuş bile gerekmez.\n\n---\n\n### Ders 4: \"Analizler Neden 30 Saniye Sürdü?\" — 20 Kat Hızlandırmanın Sırrı!\n\nHatırlıyor musunuz? Bir noktada *\"Analizler biraz fazla uzun sürüyor, neden?\"* diye sormuştunuz ve yaptığımız incelemeyle süreyi **~28 saniyeden ~1.5 saniyeye** indirmiştik!\n\nSuçlu yapay zekanın yavaş düşünmesi değildi; **gizli yeniden deneme (`Retry / Exponential Backoff`) tuzağıydı!**\nStandart LLM kütüphaneleri bir anahtarda kota hatası (`429`) aldığında hemen pes etmez: *\"Belki düzelir\"* diyerek önce 2 saniye bekler, tekrar dener, 4 saniye bekler, tekrar dener, 8 saniye bekler... 4 düğümlü bir ajan grafında bu beklemeler uç uca eklendiğinde sistem 30 saniye donmuş gibi görünür!\n\n`📂 model_factory.py` içine koyduğumuz şu iki satırlık mühendislik dokunuşu her şeyi değiştirdi:\n- **`max_retries=0`:** *\"Hata alırsan saniye bile bekleme, derhal sıradaki sağlam anahtara zıpla!\"*\n- **`request_timeout=35.0`:** *\"Sunucu yanıt vermezse sonsuza kadar asılı kalma, bağlantıyı kes ve yedek anahtara geç!\"*\n\n---\n\n### Ders 5: Şirketler Neden 100 Ücretsiz Proje Açmak Yerine Google'a Para Öder?\n\nEsprili ama çok derin sorunuzu hatırlayalım: *\"İnsanlar neden 100 tane ücretsiz proje açıp döndürmek yerine Google'a para ödüyor? Ve Google ücretli projede veriyi eğitimde kullanmayacağının güvenini nasıl veriyor?\"*\n\nGeliştirme ve öğrenme aşamasında anahtar havuzu harika bir hayat kurtarıcıdır. Ancak gerçek şirketlerin ücretli kurumsal katmana (**Paid Tier / Google Cloud Vertex AI**) geçmesinin **4 hayati sebebi** vardır:\n\n1. **Veri Gizliliği ve Sıfır Eğitim Garantisi (`Zero Data Retention`):** Ücretsiz geliştirici katmanlarında hizmet şartları gereği gönderdiğiniz prompt'lar kalite iyileştirme amacıyla incelenebilir. Ücretli Kurumsal / Vertex AI katmanında ise **Veri İşleme Sözleşmesi (DPA)** devreye girer: Verileriniz **asla** Google modellerini eğitmek için kullanılmaz, şifrelenir ve işlendikten sonra bellekte tutulmaz.\n2. **Uluslararası Denetim ve Sertifikalar:** Bankalar ve hastaneler \"söze\" değil, bağımsız denetçilerin verdiği **SOC 2, ISO 27001, GDPR ve HIPAA** sertifikalarına ve milyon dolarlık tazminat maddeleri içeren **Hukuki SLA** sözleşmelerine güvenir.\n3. **Eşzamanlı Kapasite:** Ücretsiz bir proje dakikada 10-15 isteğe (`RPM`) izin verirken, gerçek bir şirkette aynı saniyede 2.000 müşteri mesaj atar; kurumsal katman dakikada binlerce isteği tek anahtarla karşılar.\n4. **Hizmet Şartları Güvenliği:** Ücretsiz kotaları aşmak için yüzlerce sahte proje açmak (Quota Circumvention), canlıdaki bir şirketin hesabının en kritik günde otomatik güvenlik filtreleriyle askıya alınması riskini taşır.\n\n---\n\n### Ders 6: Kurumsal Güvenlik ve \"Cüzdan Yakmama\" Kalkanları\n\nGerçek bir ajan sistemini canlıya alırken şu **4 güvenlik emniyet kemerini** her zaman takmalısınız:\n1. **`.env` ve `.gitignore` Namustur:** Hiçbir API anahtarı veya GitHub Token'ı (`.py` dosyalarının içine) doğrudan yazılmaz! Anahtarlar sadece `.env` içinde yaşar ve `.gitignore` bu dosyayı GitHub'a yüklenmekten korur.\n2. **`recursion_limit` (Sonsuz Döngü Sigortası):** Ya iki ajan birbirine sürekli iş paslayıp sonsuz döngüye girerse? LangGraph'ta varsayılan olarak **25 adımlık bir sigorta (`recursion_limit=25`)** vardır. 25 adımda iş bitmezse şalteri otomatik indirir ve sabaha kadar faturanızın yanmasını engeller! İsterseniz `config={\"recursion_limit\": 10}` diyerek bu sigortayı daha da sıkılaştırabilirsiniz.\n3. **En Az Yetki İlkesi (`Least Privilege`):** Araştırmacı ajana veritabanı silme aracı bağlamayın! Her ajana sadece görevi için gereken minimum alet çantasını verin.\n4. **Kritik Eylemlerde Zorunlu HITL:** Para çıkışı, dışarıya e-posta gönderimi ve veri silme araçlarının önünde her zaman `interrupt` freni bulundurun.", "read_min": 5}, {"id": 11, "part": "KISIM V: GÖZLEMLENEBİLİRLİK, ÜRETİM MÜHENDİSLİĞİ VE TÜM EKOSİSTEM", "title": "Bölüm 11: Ekosistem Haritası — LangGraph ve İlgili Tüm Araçlar Rehberi", "short_title": "Bölüm 11: Ekosistem Haritası — LangGraph ve İlgili Tüm Araçlar Rehberi", "markdown": "## Bölüm 11: Ekosistem Haritası — LangGraph ve İlgili Tüm Araçlar Rehberi\n\nLangGraph tek başına bir ada değildir; etrafında dev bir modern araç ekosistemi vardır. Sektörde bir makale okuduğunuzda veya mimari kurduğunuzda karşınıza çıkacak **tüm araçların büyük haritası** şöyledir:\n\n```mermaid\nflowchart TD\n    subgraph Gelistirme [\"1. İnşa ve Görsel Geliştirme\"]\n        LC[\"LangChain Core\\n(Model ve Araç Tuğlaları)\"]\n        LG[\"LangGraph\\n(Durum, Döngü ve Ekip Beyni)\"]\n        Studio[\"LangGraph Studio\\n(Görsel Zaman Makinesi IDE)\"]\n    end\n\n    subgraph Baglanti [\"2. Bilgi ve Dış Dünya Bağlantısı\"]\n        MCP[\"MCP Sunucuları\\n(Dosya, GitHub, Slack, DB)\"]\n        Tavily[\"Tavily / Firecrawl\\n(Ajan Dostu Web Arama ve Kazıma)\"]\n        VecDB[\"Vektör Veritabanları\\n(pgvector, Qdrant, Chroma)\"]\n    end\n\n    subgraph Canli_Uretim [\"3. Sunucu, Ön Yüz ve Gözlemlenebilirlik\"]\n        Platform[\"LangGraph Platform / Server\\n(Ölçeklenebilir API, Cron, Kuyruk)\"]\n        Smith[\"LangSmith\\n(Run Tree, Maliyet ve Evals)\"]\n        GenUI[\"CopilotKit / Assistant-UI\\n(Canlı Onay Kartları ve Arayüz)\"]\n    end\n\n    LC --> LG\n    Baglanti --> LG\n    LG --> Studio\n    LG --> Platform\n    Platform --> Smith\n    Platform --> GenUI\n```\n\n### 11.1 Büyük Üçlüyü Bir Daha Asla Karıştırmayın!\n- **LangChain (`langchain-core`, `langchain-google-genai`):** **Lego tuğlalarıdır.** Farklı yapay zeka modellerini (Gemini, Claude, OpenAI), mesaj formatlarını ve `@tool` şablonlarını standartlaştırır.\n- **LangGraph:** **Binanın mimari iskeleti ve trafik sistemidir.** Döngüleri, kalıcı hafızayı, insan onayını ve çoklu ajan orkestrasyonunu yönetir. *(Not: LangGraph kullanmak için eski karmaşık LangChain zincirlerini kullanmak zorunda değilsinizdir; hatta düz Python ile bile LangGraph düğümü yazabilirsiniz!)*\n- **LangSmith:** **Röntgen cihazı ve kalite laboratuvarıdır.** Çalışan sistemin içini izler, maliyet ölçer ve ajanları sınava sokar.\n\n---\n\n### 11.2 LangGraph Studio: Kodsuz Görsel Ajan Röntgeni\nSizin gibi bir **Vibe Coder** için biçilmiş kaftandır! **LangGraph Studio**, yazdığınız grafı ekranda canlı bir akış şeması olarak açar:\n- Bir soru gönderdiğinizde hangi düğümün o an parladığını canlı izlersiniz,\n- Herhangi bir düğümün önüne görsel olarak \"Durdurma Noktası\" koyarsınız,\n- Fareyle beyaz tahtadaki (`State`) bir veriyi değiştirip o adımdan itibaren grafı çatallandırarak (`Fork`) tekrar oynatırsınız!\n\n---\n\n### 11.3 LangGraph Platform / LangGraph Server ve `langgraph.json`\nBilgisayarınızda çalışan `sirket_motoru.py` dosyasını gerçek bir mobil uygulamaya veya web sitesine bağlamak istediğinizde karşınıza klasik sunucu dertleri çıkar. İşte **LangGraph CLI (`langgraph dev` / `langgraph up`)** ve **`langgraph.json`** yapılandırma dosyası, grafınızı tek komutla kurumsal bir API sunucusuna dönüştürür ve şu devasa dertleri kendiliğinden çözer:\n\n1. **`Double-Texting` (Çift Mesajlaşma Krizi):** Gerçek hayatta kullanıcılar sabırsızdır! Ajan ilk soruyu araştırırken kullanıcı arkadan *\"Ha bir de şuna bak!\"* diye ikinci mesajı atar. Klasik sistemlerde iki işlem çarpışır ve hafıza bozulur. LangGraph Server buna 4 hazır çözüm sunar:\n   - `reject` (İkinciyi beklet/reddet),\n   - `enqueue` (Sıraya al, ilki bitince çalıştır),\n   - `interrupt` (İlkini durdur, yeni bilgiyle devam et),\n   - `rollback` (İlkini iptal edip birleştirerek baştan başla!).\n2. **Arka Plan Görevleri ve `Cron` Zamanlayıcılar:** *\"Her sabah 08:30'da uyan, rakiplerin fiyatlarını tara ve özet raporu bana gönder\"* şeklindeki otonom zamanlanmış işleri yerleşik olarak çalıştırır.\n3. **Asistans (Assistants):** Aynı graf iskeletini farklı sistem prompt'ları ve farklı modellerle versiyonlayarak yönetmenizi sağlar.\n\n---\n\n### 11.4 Dokümanlarda Görürseniz Şaşırmayın: `Functional API` (`@entrypoint` & `@task`)\nLangGraph'ın bildiğimiz `StateGraph` (`add_node`, `add_edge`) yapısına **Graph API** denir. LangGraph ayrıca klasik Python `if / for` döngüleri yazmayı seven ama yine de Checkpointer ve `interrupt()` özelliklerinden yararlanmak isteyenler için **`@entrypoint`** ve **`@task`** etiketlerinden oluşan bir **Functional API** de sunar. Çoklu ajan ve departman mimarilerinde bizim öğrendiğimiz **`StateGraph` her zaman çok daha görsel, düzenli ve güçlüdür;** ancak dokümanlarda `@entrypoint` gördüğünüzde *\"Ha, bu da aynı motorun fonksiyon tabanlı alternatif yazımıymış\"* diyerek geçebilirsiniz.\n\n---\n\n### 11.5 Yardımcı Ekosistem Yıldızları\n- **Ajan Dostu Web Araçları (`Tavily` & `Firecrawl`):** Klasik Google araması reklam ve HTML çöplüğü döndürür. **Tavily** doğrudan LLM'lerin okuması için temizlenmiş arama sonucu üretir; **Firecrawl** ise karmaşık bir web sitesini saniyede tertemiz Markdown metnine çevirir!\n- **Generative UI (`CopilotKit` & `Assistant-UI`):** `interrupt()` ile ajan durduğunda, kullanıcının ekranında sadece düz metin değil; üzerinde `[Onayla: 250.000 TL]` ve `[Tutarı Düzenle]` yazan şık, etkileşimli web kartlarının belirmesini sağlayan modern ön yüz kütüphaneleridir.\n- **Modern Paketleme (`uv` & `Docker`):** Python kütüphanelerini eski `pip` yerine 10-50 kat hızlı kuran **`uv`** ve tüm ajan şirketinizi tek kutuda her sunucuda çalıştıran **`Docker`**.\n- **Açık Kaynak İzleme Alternatifleri (`Langfuse` & `Arize Phoenix`):** Verilerini tamamen kendi yerel sunucularında (Self-hosted) tutmak isteyen şirketlerin LangSmith'e alternatif olarak kullandığı açık kaynaklı telemetri araçlarıdır.", "read_min": 4}, {"id": 12, "part": "KISIM V: GÖZLEMLENEBİLİRLİK, ÜRETİM MÜHENDİSLİĞİ VE TÜM EKOSİSTEM", "title": "Bölüm 12: Mezuniyet Yol Haritası — Kişisel Danışman Ajandan Gerçek Şirkete Geçiş Planı", "short_title": "Bölüm 12: Mezuniyet Yol Haritası — Kişisel Danışman Ajandan Gerçek Şirkete Geçiş Planı", "markdown": "## Bölüm 12: Mezuniyet Yol Haritası — Kişisel Danışman Ajandan Gerçek Şirkete Geçiş Planı\n\nKonuşmalarımızda geleceğe dair muazzam bir strateji kurmuştunuz:\n> *\"Bu eğitimi bitirdikten sonra gerçek şirket ortamı kurmaya başlayacağız. En başta kendime buradaki her şeyden haberdar olan bir Danışman Ajan (Meta-Advisor / Chief of Staff) oluşturmayı planlıyorum!\"*\n\nBu vizyon, bir tek kişilik dev kadro (AI-Native Founder) kurmanın **en doğru** başlangıç noktasıdır. Çünkü alt işçileri sahaya sürmeden önce sizin kararlarınızı denetleyen, projelerinizi tanıyan bir \"Kurmay Başkan\" gerekir. İşte bugünden itibaren uygulayabileceğiniz **4 Fazlı Gerçek Şirket Planı**:\n\n```mermaid\nflowchart LR\n    Faz1[\"Faz 1: Kurmay Başkan\\n(Uzun Hafızalı Danışman Ajan)\"] --> Faz2[\"Faz 2: İlk Otonom Kol\\n(Araştırma + HITL Onay Botu)\"]\n    Faz2 --> Faz3[\"Faz 3: Departmanlaşma\\n(Subgraph Uzman Ekipler)\"]\n    Faz3 --> Faz4[\"Faz 4: Kurumsal Ölçek\\n(Vertex AI + LangSmith Evals)\"]\n```\n\n1. **Faz 1 — Kişisel Kurmay Başkan (`Chief of Staff` Ajanı):**\n   - **Mimari:** Tekil ve derin düşünen bir model (`Gemini Pro` / `Argon`), `SqliteSaver` veya `PostgresSaver` ile kalıcı oturum + **`LangGraph Store`** ile uzun süreli hafıza (hedeflerinizi, tarzınızı ve geçmiş kararlarınızı asla unutmaz).\n   - **Sıfır Kopyala-Yapıştır Bağlantısı:** **MCP (Model Context Protocol)** üzerinden bilgisayarınızdaki proje klasörlerine, GitHub depolarınıza ve notlarınıza doğrudan okuma yetkisi verin. Siz kopyala-yapıştır yapmadan o güncel kodlarınızı ve planlarınızı bizzat okusun!\n2. **Faz 2 — İlk Operasyonel İşçi ve Cep Telefonundan Onay (`HITL`):**\n   - En çok vaktinizi alan **tek bir gerçek süreci** seçin (Örn: Günlük sektör/rakip taraması veya müşteri teklif taslağı hazırlama).\n   - Kritik karar noktasını `interrupt()` ile durdurup Telegram, Slack veya özel web stüdyonuzdan tek tıkla onay vereceğiniz bir köprü kurun.\n3. **Faz 3 — Departmanlaşma (`Subgraphs`):**\n   - İkinci ve üçüncü uzmanlık alanları doğdukça bunları ilk ajanın içine tıkıştırmayın! Ayrı birer **Subgraph** olarak tasarlayıp Kurmay Başkanınızın emrine birer departman olarak bağlayın.\n4. **Faz 4 — Kurumsal Kalkan (`LangSmith Evals` + `Google Cloud Vertex AI`):**\n   - Müşteri verisi ve yoğun trafik girmeye başladığında `.env` anahtar havuzundan **Vertex AI** kurumsal altyapısına geçin (Zero Data Retention güvencesi) ve her hafta başarısız örnekleri LangSmith **Dataset** sınavına ekleyerek şirketinizin zekasını kalıcı olarak yükseltin.", "read_min": 2}, {"id": 13, "part": "EKLER: Başucu Cep Rehberi", "title": "Ek 1: Mimari Karar Ağacı (\"Hangi Sorunda Hangi Aracı Seçmeliyim?\")", "short_title": "Ek 1: Mimari Karar Ağacı (\"Hangi Sorunda Hangi Aracı Seçmeliyim?\")", "markdown": "## Ek 1: Mimari Karar Ağacı (\"Hangi Sorunda Hangi Aracı Seçmeliyim?\")\n\n| Karşılaştığınız İhtiyaç / Sorun | LangGraph / Ekosistem Çözümü |\n| :--- | :--- |\n| *\"Adımlarım belli, sadece A -> B -> C sırasıyla akacak.\"* | Basit `StateGraph` + Normal `add_edge` (veya düz LCEL). |\n| *\"Ajanım dış dünyadan veri çekmeli veya işlem yapmalı.\"* | `@tool` (iyi docstring ile!) + `bind_tools` + `ToolNode` + `tools_condition`. |\n| *\"Eski mesajlar siliniyor, ajan önceki cümleyi unutuyor!\"* | State içinde `Annotated[list, add_messages]` (veya `MessagesState`). |\n| *\"Program kapanınca veya ertesi gün konuşma kayboluyor.\"* | `SqliteSaver` (yerel) veya `PostgresSaver` (bulut) Checkpointer. |\n| *\"Farklı kullanıcıların bilgileri birbirine karışmasın!\"* | Her kullanıcıya/oturuma benzersiz `configurable: {\"thread_id\": \"...\"}`. |\n| *\"Yeni sohbet açsam bile ajan benim kim olduğumu hatırlasın!\"* | **`LangGraph Store`** (Uzun süreli oturumlar arası hafıza). |\n| *\"Model serbest metin yazmasın, kesin bir karar formu doldursun.\"* | `Pydantic BaseModel` + `llm.with_structured_output(...)`. |\n| *\"Para transferi / silme işleminden önce benden onay istesin.\"* | `interrupt_before=[...]` veya dinamik `interrupt()` + `Command(resume=...)`. |\n| *\"Ajan 5. adımda hata yaptı, baştan başlamadan oradan düzelteyim.\"* | `get_state_history()` + `update_state()` (Time-Travel & Forking). |\n| *\"Tek ajana 20 araç verdim, kafası karışmaya başladı.\"* | **Supervisor Pattern** veya **Subgraphs (Alt Graflar)** ile uzmanlara böl. |\n| *\"Aynı anda 10 farklı kaynağı paralel araştırıp birleştirsin.\"* | **`Send` API** (Dinamik Map-Reduce paralel kollar). |\n| *\"Kopyala-yapıştır yapmadan dosyalarıma ve uygulamalara erişsin.\"* | **MCP (Model Context Protocol)** + **Agentic RAG** (Vektör Veritabanı). |\n| *\"Ajanım neden yavaş çalışıyor veya kaç kuruş harcadı göremiyorum.\"* | **LangSmith** (`LANGCHAIN_TRACING_V2=\"true\"`) veya `BaseCallbackHandler`. |\n| *\"Ajan sonsuz döngüye girerse faturamı patlatmasın!\"* | `config={\"recursion_limit\": 15}` güvenlik sigortası. |", "read_min": 2}, {"id": 14, "part": "EKLER: Başucu Cep Rehberi", "title": "Ek 2: A'dan Z'ye İnsan Dilinde LangGraph Terimler Sözlüğü", "short_title": "Ek 2: A'dan Z'ye İnsan Dilinde LangGraph Terimler Sözlüğü", "markdown": "## Ek 2: A'dan Z'ye İnsan Dilinde LangGraph Terimler Sözlüğü\n\n- **Agent (Ajan):** Kendi başına hangi adımları atacağına ve hangi araçları kullanacağına karar verebilen, döngüsel çalışan yapay zeka sistemi.\n- **Agentic RAG:** Klasik kör belge aramasının aksine; bulduğu belgenin kalitesini denetleyen, beğenmezse soruyu değiştirip tekrar arayan akıllı LangGraph bilgi döngüsü.\n- **Checkpointer:** Her süper adımda beyaz tahtanın (`State`) fotoğrafını RAM, SQLite veya PostgreSQL'e kaydeden zaman makinesi motoru.\n- **`Command`:** Bir düğümün içinden aynı anda hem beyaz tahtayı güncelleyip (`update`) hem de bir sonraki gidilecek düğümü seçmesini (`goto`) veya uykudan uyanmasını (`resume`) sağlayan modern LangGraph komutu.\n- **Conditional Edge (Koşullu Kenar):** Beyaz tahtanın durumuna göre akışı farklı istasyonlara yönlendiren kavşak / trafik polisi.\n- **Context Bloat (Bağlam Kirliliği):** Modele gereğinden fazla geçmiş mesaj, ham veri veya araç tanımı yüklenmesi sonucu zekasının ve isabet oranının düşmesi.\n- **DAG (Directed Acyclic Graph):** Geriye dönüşün ve döngünün yasak olduğu tek yönlü düz boru hattı.\n- **Docstring:** Python fonksiyonunun hemen altına yazılan açıklama metni; yapay zekanın o aracı ne zaman çağıracağını anlamasını sağlayan kullanma kılavuzu.\n- **Edge (Kenar):** Bir düğümden diğerine geçişi belirleyen konveyör bant.\n- **Evals (Evaluations):** Ajan canlıya çıkmadan önce altın soru setleri ve Hakem Yapay Zeka (`LLM-as-a-Judge`) ile yapılan otomatik kalite sınavı.\n- **Forking (Dallandırma):** Geçmişteki bir kayıt noktasına dönüp veriyi değiştirerek eski geçmişi bozmadan yeni bir paralel zaman çizgisi başlatma.\n- **HITL (Human-in-the-Loop):** Kritik kararlarda ajanın dondurulup insan onayı, düzenlemesi veya yönlendirmesiyle yoluna devam etmesi.\n- **`InjectedState`:** Aracın ihtiyaç duyduğu gizli/teknik verilerin (örn. kullanıcı ID'si) LLM'den saklanarak doğrudan State üzerinden fonksiyona güvenli aktarılması.\n- **LangSmith:** LangGraph uygulamalarının düşünce adımlarını (`Run Tree`), gecikmelerini, maliyetlerini ve kalite sınavlarını yöneten gözlemlenebilirlik platformu.\n- **LCEL (LangChain Expression Language):** `|` işaretiyle kurulan düz ve döngüsüz işlem zinciri dili.\n- **MCP (Model Context Protocol):** Yapay zeka ajanlarının yerel dosyalara, veritabanlarına ve dış servislere standart tek tip fişle bağlanmasını sağlayan evrensel protokol.\n- **Node (Düğüm):** Beyaz tahtayı okuyup uzmanlık işini yapan ve güncellemeleri tahtaya geri bırakan istasyon (Python fonksiyonu veya alt graf).\n- **Persistence (Kalıcılık):** Ajanın durumunun sunucu kapansa dahi kaybolmayacak şekilde veritabanında yaşatılması.\n- **Progressive Disclosure (Kademeli Açığa Çıkarma):** Bağlamı şişirmemek için ajana başlangıçta sadece özet başlıkları gösterip, detay kılavuzları yalnızca ihtiyaç doğduğunda yükleme prensibi (Antigravity `SKILL.md` mimarisi).\n- **ReAct (Reason + Act):** Ajanın *\"Düşün -> Araç Çağır -> Sonucu Gözlemle -> Yeniden Düşün\"* döngüsüyle çok adımlı problemleri çözme felsefesi.\n- **Reducer (Birleştirici):** Beyaz tahtadaki bir alana yeni veri geldiğinde eskisinin silinip silinmeyeceğini veya listeye nasıl ekleneceğini belirleyen kural (`add_messages`).\n- **Run Tree (Çalışma Ağacı):** Tek bir kullanıcı isteğinin tetiklediği tüm düğüm, model ve araç çağrılarının hiyerarşik röntgen şeması.\n- **`Send` API:** Çalışma anında sayısını önceden bilmediğiniz kadar paralel işçi düğümünü aynı anda fırlatıp sonuçlarını toplama (Map-Reduce) mekanizması.\n- **State (Durum):** Graf boyunca tüm düğümlerin ortaklaşa okuduğu ve güncellediği merkezi hafıza panosu.\n- **Store (LangGraph Store):** Tek bir sohbetin (`thread_id`) ötesine geçip, kullanıcı veya şirket genelinde tüm sohbetler boyunca hatırlanan uzun süreli hafıza deposu.\n- **Structured Output (Yapılandırılmış Çıktı):** LLM'in serbest metin yerine `Pydantic` şemasına birebir uyan garantili veri nesnesi üretmesi.\n- **Subgraph (Alt Graf):** Kendi bağımsız iç akışı ve özel hafızası olan, üst grafa tek bir departman düğümü gibi takılabilen modüler graf.\n- **Super-step (Süper Adım):** LangGraph'ın Pregel motorunda bir (veya paralel birkaç) düğümün çalışıp sonuçlarının mühürlendiği tek bir zaman karesi.\n- **Supervisor Pattern:** Merkezi bir yönetici ajanın uzman işçilere görev dağıtıp her adımda geri rapor aldığı ekip mimarisi.\n- **`thread_id`:** Farklı kullanıcıların veya farklı projelerin hafızalarını veritabanında birbirinden tamamen izole eden oturum anahtarı.\n- **`ToolNode`:** LLM'in ürettiği araç sipariş fişlerini (`tool_calls`) alıp gerçek Python fonksiyonlarını çalıştıran ve sonucu `ToolMessage` olarak tahtaya asan hazır mutfak düğümü.\n\n---\n\n> [!TIP]\n> **Son Söz:** Artık elinizde sadece çalışan bir `📂 LangGraph_Course` deposu değil; tek bir düğümden çok departmanlı otonom holdinglere kadar her türlü yapay zeka sistemini tasarlayabilecek eksiksiz bir **Zihinsel Harita** var. Kodlar zamanla değişir, modeller her ay yenilenir; ama bu kitapta öğrendiğiniz **Durum (State), Döngü (Cycle), Kalıcılık (Persistence), İnsan Kontrolü (HITL), Uzmanlaşmış Ekipler (Multi-Agent) ve Gözlemlenebilirlik (Observability)** ilkeleri otonom yapay zeka çağının değişmez temel taşlarıdır.", "read_min": 4}];
+    const PDF_BASE64 = "";
+    const COCKPIT_URL = "";
+
+    function safeGetStorage(key, fallback) {
+      try {
+        const val = localStorage.getItem(key);
+        return val !== null ? val : fallback;
+      } catch (e) {
+        return fallback;
+      }
+    }
+
+    function safeSetStorage(key, val) {
+      try {
+        localStorage.setItem(key, val);
+      } catch (e) {}
+    }
+
+    let currentIdx = parseInt(safeGetStorage('lg_book_chapter', '0'), 10);
+    if (isNaN(currentIdx) || currentIdx < 0 || currentIdx >= CHAPTERS.length) currentIdx = 0;
+
+    let completedSet = new Set();
+    try {
+      completedSet = new Set(JSON.parse(safeGetStorage('lg_book_completed', '[]')));
+    } catch (e) {}
+
+    let bookNotes = {};
+    try {
+      bookNotes = JSON.parse(safeGetStorage('lg_book_notes', '{}')) || {};
+    } catch (e) {
+      bookNotes = {};
+    }
+
+    let fontSize = parseInt(safeGetStorage('lg_book_fontsize', '18'), 10);
+    document.documentElement.style.setProperty('--reader-font-size', fontSize + 'px');
+
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'dark',
+      securityLevel: 'loose',
+      fontFamily: 'Inter, sans-serif'
+    });
+
+    function transformAlerts(html) {
+      const types = {
+        'IMPORTANT': { icon: '💡', title: 'Önemli Mimari İlke', cls: 'bg-purple-950/40 border border-purple-500/35 text-purple-100', head: 'text-purple-300' },
+        'TIP':       { icon: '🚀', title: 'Pratik İpucu',       cls: 'bg-emerald-950/40 border border-emerald-500/35 text-emerald-100', head: 'text-emerald-300' },
+        'WARNING':   { icon: '⚠️', title: 'Kritik Uyarı',       cls: 'bg-amber-950/40 border border-amber-500/35 text-amber-100', head: 'text-amber-300' },
+        'NOTE':      { icon: '📌', title: 'Derinleşme Notu',    cls: 'bg-sky-950/40 border border-sky-500/35 text-sky-100', head: 'text-sky-300' },
+        'CAUTION':   { icon: '🛑', title: 'Dikkat',             cls: 'bg-red-950/40 border border-red-500/35 text-red-100', head: 'text-red-300' }
+      };
+
+      return html.replace(/<blockquote>\s*<p>\[!(IMPORTANT|TIP|WARNING|NOTE|CAUTION)\]\s*([\s\S]*?)<\/blockquote>/g, (m, kind, body) => {
+        const cfg = types[kind] || types['NOTE'];
+        return `<div class="callout-card ${cfg.cls}">
+          <div class="font-bold mb-1.5 flex items-center gap-2 ${cfg.head}"><span>${cfg.icon}</span><span>${cfg.title}</span></div>
+          <div><p>${body}</div>
+        </div>`;
+      });
+    }
+
+    async function renderChapter(idx) {
+      currentIdx = idx;
+      safeSetStorage('lg_book_chapter', String(idx));
+      const ch = CHAPTERS[idx];
+
+      document.getElementById('chapter-part-badge').textContent = ch.part;
+      document.getElementById('page-counter').textContent = `Sayfa ${idx + 1} / ${CHAPTERS.length}`;
+      document.getElementById('read-badge').textContent = `⏱️ ~${ch.read_min} dk okuma`;
+      document.getElementById('progress-label').textContent = `Sayfa: ${idx + 1} / ${CHAPTERS.length}`;
+      document.getElementById('completed-label').textContent = `${completedSet.size} tamamlandı`;
+      document.getElementById('top-progress').style.width = `${((idx + 1) / CHAPTERS.length) * 100}%`;
+
+      const mermaidBlocks = [];
+      let md = ch.markdown;
+      if (idx === 0) {
+        md = md.replace(/## 📑 İçindekiler[\s\S]*?---\n/, '');
+      }
+
+      md = md.replace(/```mermaid\n([\s\S]*?)```/g, (_, code) => {
+        const token = `@@MERMAID_${mermaidBlocks.length}@@`;
+        mermaidBlocks.push(code.trim());
+        return token;
+      });
+
+      let html = marked.parse(md);
+      html = transformAlerts(html);
+
+      mermaidBlocks.forEach((code, i) => {
+        const safe = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        html = html.replace(`<p>@@MERMAID_${i}@@</p>`, `<div class="mermaid-box"><pre class="mermaid">${safe}</pre></div>`);
+        html = html.replace(`@@MERMAID_${i}@@`, `<div class="mermaid-box"><pre class="mermaid">${safe}</pre></div>`);
+      });
+
+      const container = document.getElementById('chapter-content');
+      container.innerHTML = html;
+
+      container.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+
+      const mNodes = container.querySelectorAll('.mermaid');
+      if (mNodes.length > 0) {
+        try {
+          await mermaid.run({ nodes: mNodes });
+        } catch (e) {
+          console.warn('Mermaid render warning:', e);
+        }
+      }
+
+      const btnPrev = document.getElementById('btn-prev');
+      const btnNext = document.getElementById('btn-next');
+      if (idx > 0) {
+        btnPrev.disabled = false;
+        btnPrev.classList.remove('opacity-40', 'pointer-events-none');
+        document.getElementById('prev-title').textContent = CHAPTERS[idx - 1].short_title;
+      } else {
+        btnPrev.disabled = true;
+        btnPrev.classList.add('opacity-40', 'pointer-events-none');
+        document.getElementById('prev-title').textContent = 'Kitap Başlangıcı';
+      }
+
+      if (idx < CHAPTERS.length - 1) {
+        btnNext.disabled = false;
+        btnNext.classList.remove('opacity-40', 'pointer-events-none');
+        document.getElementById('next-title').textContent = CHAPTERS[idx + 1].short_title;
+      } else {
+        btnNext.disabled = true;
+        btnNext.classList.add('opacity-40', 'pointer-events-none');
+        document.getElementById('next-title').textContent = 'Kitap Sonu 🎉';
+      }
+
+      const btnComp = document.getElementById('btn-complete');
+      if (completedSet.has(idx)) {
+        btnComp.innerHTML = '<span>✅</span> <span>Tamamlandı (Geri Almak İçin Tıkla)</span>';
+      } else {
+        btnComp.innerHTML = '<span>✓</span> <span>Bu Bölümü Tamamladım Olarak İşaretle</span>';
+      }
+
+      document.getElementById('notes-chapter-label').textContent = ch.short_title;
+      document.getElementById('chapter-note-input').value = bookNotes[String(idx)] || '';
+
+      renderTOC(document.getElementById('search-input').value);
+      document.getElementById('reader-scroll').scrollTop = 0;
+    }
+
+    function renderTOC(query = '') {
+      const toc = document.getElementById('toc-list');
+      const q = query.trim().toLowerCase();
+      const grouped = {};
+
+      CHAPTERS.forEach(ch => {
+        if (q && !ch.title.toLowerCase().includes(q) && !ch.markdown.toLowerCase().includes(q)) {
+          return;
+        }
+        if (!grouped[ch.part]) grouped[ch.part] = [];
+        grouped[ch.part].push(ch);
+      });
+
+      let html = '';
+      Object.keys(grouped).forEach(part => {
+        html += `<div>
+          <div class="px-2.5 mb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-500">${part}</div>
+          <div class="space-y-1">`;
+        grouped[part].forEach(ch => {
+          const active = ch.id === currentIdx;
+          const done = completedSet.has(ch.id);
+          const cls = active
+            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 font-semibold'
+            : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5';
+          html += `<button onclick="renderChapter(${ch.id})" class="w-full text-left px-3 py-2 rounded-xl border text-xs transition flex items-start justify-between gap-2 ${cls}">
+            <span class="leading-snug">${ch.short_title}</span>
+            <span class="shrink-0 text-[11px]">${done ? '✅' : ''}</span>
+          </button>`;
+        });
+        html += `</div></div>`;
+      });
+
+      toc.innerHTML = html || '<p class="text-xs text-slate-500 p-3">Eşleşen bölüm bulunamadı.</p>';
+    }
+
+    function filterTOC() {
+      renderTOC(document.getElementById('search-input').value);
+    }
+
+    function prevChapter() {
+      if (currentIdx > 0) renderChapter(currentIdx - 1);
+    }
+
+    function nextChapter() {
+      if (currentIdx < CHAPTERS.length - 1) renderChapter(currentIdx + 1);
+    }
+
+    function markCurrentCompleted() {
+      if (completedSet.has(currentIdx)) {
+        completedSet.delete(currentIdx);
+      } else {
+        completedSet.add(currentIdx);
+      }
+      safeSetStorage('lg_book_completed', JSON.stringify(Array.from(completedSet)));
+      renderChapter(currentIdx);
+    }
+
+    function changeFontSize(delta) {
+      if (delta === 0) fontSize = 18;
+      else fontSize = Math.min(24, Math.max(14, fontSize + delta));
+      safeSetStorage('lg_book_fontsize', String(fontSize));
+      document.documentElement.style.setProperty('--reader-font-size', fontSize + 'px');
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('hidden');
+    }
+
+    function toggleNotesDrawer() {
+      const dr = document.getElementById('notes-drawer');
+      dr.classList.toggle('hidden');
+      dr.classList.toggle('flex');
+    }
+
+    function autoSaveNote() {
+      bookNotes[String(currentIdx)] = document.getElementById('chapter-note-input').value;
+      safeSetStorage('lg_book_notes', JSON.stringify(bookNotes));
+    }
+
+    function saveCurrentNote() {
+      autoSaveNote();
+      const msg = document.getElementById('note-save-msg');
+      msg.textContent = '✔ Tarayıcıya kaydedildi!';
+      msg.className = 'text-[11px] text-emerald-400 font-semibold';
+      setTimeout(() => {
+        msg.textContent = 'Tarayıcı hafızasında kalıcıdır';
+        msg.className = 'text-[11px] text-slate-500';
+      }, 2500);
+    }
+
+    function exportNotesJson() {
+      const dataStr = JSON.stringify(bookNotes, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'langgraph_kitap_notlarim.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function importNotesJson(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported && typeof imported === 'object') {
+            bookNotes = Object.assign({}, bookNotes, imported);
+            safeSetStorage('lg_book_notes', JSON.stringify(bookNotes));
+            document.getElementById('chapter-note-input').value = bookNotes[String(currentIdx)] || '';
+            saveCurrentNote();
+          }
+        } catch (err) {
+          alert('Geçersiz JSON not yedeği dosyası.');
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      if (e.key === 'ArrowRight') nextChapter();
+      if (e.key === 'ArrowLeft') prevChapter();
+    });
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      if (COCKPIT_URL) {
+        const backBtn = document.getElementById('cockpit-back-btn');
+        backBtn.href = COCKPIT_URL;
+        backBtn.classList.remove('hidden');
+        backBtn.classList.add('flex');
+      }
+
+      if (PDF_BASE64) {
+        try {
+          const bin = atob(PDF_BASE64);
+          const bytes = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          const blob = new Blob([bytes], { type: 'application/pdf' });
+          const blobUrl = URL.createObjectURL(blob);
+          const pdfBtn = document.getElementById('pdf-download-btn');
+          pdfBtn.href = blobUrl;
+        } catch (e) {
+          console.warn('PDF blob hazirlama uyarisi:', e);
+        }
+      }
+
+      await renderChapter(currentIdx);
+    });
+  </script>
+</body>
+</html>

@@ -47,12 +47,19 @@ class SWEState(TypedDict):
 
 
 # ==============================================================================
-# 2. Pydantic Yapılandırılmış Çıktı Şeması
+# 2. Pydantic Yapılandırılmış Çıktı Şemaları
 # ==============================================================================
 class CodeGenerationOutput(BaseModel):
     """Mühendisin ürettiği tam ve eksiksiz kod çıktısı."""
     full_code: str = Field(description="Dosyanın tüm içeriğini içeren, eksiksiz, çalışan, hiçbir kısmı atlanmamış Python veya CSS/HTML kodu.")
     change_summary: str = Field(description="Nelerin değiştirildiğini, eklenen/silinen ana bileşenleri açıklayan 2-3 cümlelik teknik özet.")
+
+
+class CodebaseScanOutput(BaseModel):
+    """Kullanıcının teknik olmayan direktifini inceleyip etkilenecek dosyaları ve planı belirleyen Baş Mimar çıktısı."""
+    relevant_files: List[str] = Field(description="Bu direktifi eksiksiz yerine getirmek için değiştirilmesi gereken dosya yollarının listesi.")
+    architectural_plan: str = Field(description="Kullanıcıya yönelik, hangi dosyada nelerin değiştirileceğini anlatan sade yönetici özeti.")
+    estimated_impact: str = Field(description="Değişikliğin sistem üzerindeki etkisi (örn: 'Yüksek - Tüm UI teması ve CSS yenileniyor').")
 
 
 # ==============================================================================
@@ -271,3 +278,136 @@ def rollback_code_change(target_file: str, snapshot_path: Optional[str] = None) 
     
     latest_snapshot = matching[0]["path"]
     return CodeSnapshotManager.restore_snapshot(latest_snapshot, target_file)
+
+
+# ==============================================================================
+# 6. Çoklu Dosya ve Kod Tabanı Genelinde Otonom Orkestrasyon (Codebase-Wide)
+# ==============================================================================
+
+def discover_relevant_files_for_task(instruction: str) -> CodebaseScanOutput:
+    """
+    Kullanıcı kodlama bilmese ve dosya adı vermese bile; verilen direktifi
+    inceleyerek hangi proje dosyalarının değiştirilmesi gerektiğini otonom tespit eder.
+    """
+    all_files = CodeInspector.list_project_files()
+    
+    prompt = (
+        "Sen Baş Yazılım Mimarı ve Otonom Proje Orkestratörüsün (Principal Software Architect).\n"
+        "Kullanıcı kodlama ve dosya isimlerinden anlamayan bir Yönetim Kurulu Başkanıdır.\n"
+        f"Kullanıcının Direktifi: '{instruction}'\n\n"
+        f"Projedeki Düzenlenebilir Mevcut Dosyalar:\n{all_files}\n\n"
+        "GÖREVİN:\n"
+        "1. Kullanıcının bu hedefini eksiksiz gerçekleştirmek için hangi dosya veya dosyaların "
+        "değiştirilmesi gerektiğini belirle. (Örn: Arayüz/tema/CSS isteği ise 'yonetici_masasi.py' ve "
+        "ilgili arayüz sayfalarını seç; arka plan mantığı ise motor dosyalarını seç).\n"
+        "2. En az 1, en fazla 4 en kritik dosyayı seç.\n"
+        "3. Kullanıcıya sade, teknik jargona boğulmamış bir mimari plan hazırla."
+    )
+
+    llm = get_gemini_llm(temperature=0.1).with_structured_output(CodebaseScanOutput)
+    scan_result: CodebaseScanOutput = llm.invoke(prompt)
+
+    # Güvenlik doğrulaması: Var olmayan dosya üretilmişse temizle
+    valid_selected = [f for f in scan_result.relevant_files if f in all_files]
+    if not valid_selected:
+        # Fallback: Eğer model eşleştiremediyse ana arayüz dosyasını seç
+        valid_selected = ["yonetici_masasi.py"] if "yonetici_masasi.py" in all_files else [all_files[0]]
+    scan_result.relevant_files = valid_selected
+
+    return scan_result
+
+
+def plan_and_generate_codebase_patch(instruction: str, specific_files: Optional[List[str]] = None) -> Dict[str, Any]:
+    """
+    Tüm kod tabanında (Codebase-Wide) çoklu dosya analiz ve patch döngüsü:
+    1. İlgili dosyaları otomatik tespit eder (kullanıcı dosya seçmediyse).
+    2. Her dosya için AST doğrulamalı kod üretir ve self-healing uygular.
+    3. Tüm dosyaların diff'lerini tek bir kurumsal raporda toplar.
+    DİKKAT: Henüz diske yazmaz! Kullanıcı onayı için hazır bekletir.
+    """
+    if specific_files and len(specific_files) > 0:
+        target_files = specific_files
+        plan_desc = f"Seçilen {len(specific_files)} adet dosya üzerinde cerrahi refactoring uygulanıyor."
+        impact = "Belirli dosyalara hedeflenmiş müdahale."
+    else:
+        scan_result = discover_relevant_files_for_task(instruction)
+        target_files = scan_result.relevant_files
+        plan_desc = scan_result.architectural_plan
+        impact = scan_result.estimated_impact
+
+    file_patches = []
+    all_success = True
+
+    for fpath in target_files:
+        try:
+            patch_data = plan_and_generate_code_patch(instruction, fpath)
+            file_patches.append(patch_data)
+            if not patch_data["syntax_valid"]:
+                all_success = False
+        except Exception as e:
+            file_patches.append({
+                "success": False,
+                "target_file": fpath,
+                "summary": f"İşlem sırasında hata oluştu: {str(e)}",
+                "diff": "",
+                "proposed_content": "",
+                "original_content": "",
+                "syntax_valid": False,
+                "syntax_error": str(e),
+                "iterations_taken": 0
+            })
+            all_success = False
+
+    return {
+        "success": all_success,
+        "instruction": instruction,
+        "architectural_plan": plan_desc,
+        "estimated_impact": impact,
+        "target_files": target_files,
+        "file_patches": file_patches,
+        "total_files": len(file_patches)
+    }
+
+
+def execute_approved_codebase_patch(codebase_patch_result: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Onaylanan çoklu dosya değişikliğini atomik olarak diske yazar.
+    Tüm dosyalar için toplu (batch) snapshot alır; herhangi bir hata durumunda
+    tüm dosyaları anında eski haline geri döndürür.
+    """
+    patches = codebase_patch_result.get("file_patches", [])
+    target_paths = [p["target_file"] for p in patches if p.get("syntax_valid")]
+
+    if not target_paths:
+        raise ValueError("Diske yazılacak geçerli bir kod yaması bulunamadı.")
+
+    # 1. Toplu Snapshot Al
+    batch_id, backups = CodeSnapshotManager.create_batch_snapshot(target_paths)
+
+    written_files = []
+    try:
+        for p in patches:
+            if p.get("syntax_valid") and p.get("proposed_content"):
+                CodeQualityEngine.apply_atomic_write(
+                    target_path=p["target_file"],
+                    new_content=p["proposed_content"],
+                    take_backup=False  # Toplu snapshot zaten alındı
+                )
+                written_files.append(p["target_file"])
+    except Exception as e:
+        # Hata anında tüm grubu geri al (Toplu Rollback)
+        CodeSnapshotManager.restore_batch_snapshot(batch_id)
+        raise IOError(f"Yazım sırasında hata oluştu! Tüm değişiklikler geri alındı. Hata: {e}")
+
+    return {
+        "status": "SUCCESS",
+        "batch_id": batch_id,
+        "written_files": written_files,
+        "backup_count": len(backups)
+    }
+
+
+def rollback_codebase_batch(batch_id: str) -> List[str]:
+    """Toplu snapshot paketini geri yükler."""
+    return CodeSnapshotManager.restore_batch_snapshot(batch_id)
+
