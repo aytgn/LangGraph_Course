@@ -31,6 +31,8 @@ enterprise.db*
 # Test, Rapor & Geçici Dosyalar
 # ==========================================
 *.log
+kitap_notlarim.json
+kisisel_notlar.json
 .pytest_cache/
 .coverage
 htmlcov/
