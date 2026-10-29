@@ -35,6 +35,7 @@ enterprise.db*
 .coverage
 htmlcov/
 .mypy_cache/
+.ipynb_checkpoints/
 
 # ==========================================
 # İşletim Sistemi & Editör Çöpleri

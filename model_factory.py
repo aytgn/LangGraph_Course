@@ -7,22 +7,40 @@ from langchain_core.runnables import Runnable
 load_dotenv()
 
 # ==============================================================================
-# 1. Sabit Model & .env Tabanlı API Key Havuzu (Key Rotation Pool)
+# 1. Dinamik Model & .env Tabanlı API Key Havuzu (Dynamic Key Rotation Pool)
 # ==============================================================================
-# Model asla düşürülmez; tüm projede en güçlü ve güncel 'gemini-3.8-flash' kullanılır!
-TARGET_MODEL = "gemini-3.8-flash"
+# Model tercihi .env dosyasındaki GEMINI_MODEL üzerinden dinamik yönetilir.
+# Varsayılan: 'gemini-3.8-flash' (veya ultra hızlı 'gemini-3.1-flash-lite')
+TARGET_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+
+def _clean_key(k: str) -> str:
+    """Anahtar stringinden satır içi yorumları (#) ve tırnakları temizler."""
+    if "#" in k:
+        k = k.split("#")[0]
+    return k.strip().strip('"').strip("'")
 
 def _get_key_pool() -> list[str]:
-    """Tüm API anahtarlarını GÜVENLİ bir şekilde yalnızca .env dosyasından okur."""
-    raw = os.getenv("GOOGLE_API_KEYS")
-    if raw:
-        keys = [k.strip() for k in raw.split(",") if k.strip()]
-        if keys:
-            return keys
+    """
+    Tüm API anahtarlarını dinamik ve güvenli bir şekilde yalnızca .env dosyasından okur.
+    İleride .env dosyasına kaç anahtar eklenirse eklensin (virgülle, yeni satırla veya
+    yorum satırlarıyla), bu fonksiyon otomatik olarak havuzu günceller.
+    """
+    raw = os.getenv("GOOGLE_API_KEYS", "")
+    keys = []
+    
+    # Hem virgül hem satır sonu ile ayrılmış anahtarları ayrıştır
+    for part in raw.replace("\n", ",").split(","):
+        cleaned = _clean_key(part)
+        if cleaned:
+            keys.append(cleaned)
             
-    single_key = os.getenv("GOOGLE_API_KEY")
-    if single_key:
-        return [single_key.strip()]
+    if keys:
+        return keys
+        
+    single_key = os.getenv("GOOGLE_API_KEY", "")
+    cleaned_single = _clean_key(single_key)
+    if cleaned_single:
+        return [cleaned_single]
         
     raise ValueError(
         "HATA: .env dosyasında geçerli bir API anahtarı bulunamadı! "
@@ -31,13 +49,13 @@ def _get_key_pool() -> list[str]:
 
 API_KEY_POOL = _get_key_pool()
 
-def _print_key_rotate_warning(old_index: int, new_index: int, reason: str):
+def _print_key_rotate_warning(old_index: int, new_index: int, reason: str, model_name: str = TARGET_MODEL):
     """API anahtarı değiştiğinde konsola dikkat çekici bir rotasyon kartı basar."""
     border = "═" * 72
     print(f"\n{border}")
     print("🔄   [API KEY ROTASYONU / FAILOVER ACTIVATED]")
     print(border)
-    print(f"  • Model       : '{TARGET_MODEL}' (SABİT - Model Asla Değişmedi)")
+    print(f"  • Model       : '{model_name}' (SABİT - Model Asla Değişmedi)")
     print(f"  • Önceki Key  : Key #{old_index + 1} (Kota / Geçici Yoğunluk)")
     print(f"  • Hata Sebebi : {reason[:60]}...")
     print(f"  • Yeni Key    : ➔ Key #{new_index + 1} devreye alındı!")
@@ -75,7 +93,8 @@ class KeyRotatingGeminiLLM(Runnable):
             model=self.model_name,
             google_api_key=api_key,
             temperature=self.temperature,
-            max_retries=0  # Hata durumunda beklemeden bir sonraki anahtara geç!
+            max_retries=0,  # Hata durumunda beklemeden bir sonraki anahtara geç!
+            request_timeout=35.0  # Sunucu yanıt vermezse donmayı engelleyip rotasyonu tetikle
         )
         if self.tools:
             llm = llm.bind_tools(self.tools)
@@ -102,7 +121,8 @@ class KeyRotatingGeminiLLM(Runnable):
                 _print_key_rotate_warning(
                     old_index=idx,
                     new_index=next_idx,
-                    reason=str(e)
+                    reason=str(e),
+                    model_name=self.model_name
                 )
                 continue
 
@@ -128,7 +148,8 @@ class KeyRotatingGeminiLLM(Runnable):
                 _print_key_rotate_warning(
                     old_index=idx,
                     new_index=next_idx,
-                    reason=str(e)
+                    reason=str(e),
+                    model_name=self.model_name
                 )
                 continue
 

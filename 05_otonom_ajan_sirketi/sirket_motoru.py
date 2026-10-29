@@ -99,6 +99,14 @@ engineering_llm = get_gemini_llm(temperature=0.1, tools=engineering_tools)
 audit_tools = [authorize_project_budget]
 audit_llm = get_gemini_llm(temperature=0.1, tools=audit_tools)
 
+def get_text(content) -> str:
+    """Mesaj içeriğini (string veya Gemini blok listesi) güvenle düz metne çevirir."""
+    if isinstance(content, str):
+        return content
+    elif isinstance(content, list):
+        return " ".join([b.get("text", "") if isinstance(b, dict) else str(b) for b in content])
+    return str(content)
+
 # ==============================================================================
 # 5. Departman Düğümleri (Department Nodes)
 # ==============================================================================
@@ -107,16 +115,24 @@ def ceo_supervisor_node(state: CompanyState):
     """CEO / Orkestratör: Şirket hedeflerini inceler ve süreci koordine eder."""
     console.print("\n[bold gold1]👑 [CEO / EXECUTIVE BOARD]:[/bold gold1] Şirket durumunu denetliyor ve sıradaki departmanı seçiyor...")
     
+    has_research = bool(state.get("research_summary"))
+    has_code = bool(state.get("code_deliverable"))
+    has_audit = bool(state.get("is_audit_passed"))
+    
     prompt = (
         "Sen 'Otonom Ajan Şirketi'nin CEO'susun. 3 ana departmanı yönetiyorsun:\n"
         "1. 'Research_Dept': Pazar araştırması ve sektör analizi yapar.\n"
         "2. 'Engineering_Dept': Araştırma sonuçlarına dayanarak üretim kodu geliştirir.\n"
         "3. 'Audit_Approval_Dept': Proje bütçesini denetler ve bütçe tahsis aracını çalıştırır.\n\n"
-        "MANTIKSAL AKIŞ SIRASI:\n"
-        "- Araştırma yoksa -> 'Research_Dept'\n"
-        "- Araştırma var ama kod yoksa -> 'Engineering_Dept'\n"
-        "- Kod tamamlandıysa ve bütçe onayı gerekiyorsa -> 'Audit_Approval_Dept'\n"
-        "- Tüm çıktılar hazırsa ve bütçe onaylandıysa -> 'FINISH'\n"
+        f"MEVCUT ŞİRKET DURUMU:\n"
+        f"- 1. Pazar Araştırması : {'TAMAMLANDI' if has_research else 'EKSİK (Yapılmalı)'}\n"
+        f"- 2. Mühendislik Kodu  : {'TAMAMLANDI' if has_code else 'EKSİK (Geliştirilmeli)'}\n"
+        f"- 3. Bütçe & Finans Denetimi : {'TAMAMLANDI' if has_audit else 'EKSİK (Yapılmalı)'}\n\n"
+        "MANTIKSAL AKIŞ KURALLARI:\n"
+        "- Eğer Pazar Araştırması EKSİK ise -> Kesinlikle 'Research_Dept'\n"
+        "- Eğer Pazar Araştırması TAMAMLANDI ama Mühendislik Kodu EKSİK ise -> Kesinlikle 'Engineering_Dept'\n"
+        "- Eğer Mühendislik Kodu TAMAMLANDI ama Bütçe & Finans EKSİK ise -> Kesinlikle 'Audit_Approval_Dept'\n"
+        "- Eğer hepsi TAMAMLANDI ise -> Kesinlikle 'FINISH'\n"
     )
     
     # Boş veya eksik mesajları temizle ve Gemini kuralına uygun şekilde sonuna HumanMessage ekle
@@ -128,6 +144,13 @@ def ceo_supervisor_node(state: CompanyState):
     decision: CEORouteDecision = ceo_llm.invoke(messages)
     
     console.print(f"  👉 [bold cyan]CEO Stratejik Kararı:[/bold cyan] [green]'{decision.next}'[/green] | [dim]{decision.strategic_reason}[/dim]")
+    
+    if decision.next == "FINISH":
+        closing_msg = AIMessage(
+            content=f"👑 [CEO Kapanış Bildirimi]: {decision.strategic_reason}\nProje tüm kurumsal departmanlarca başarıyla tamamlanmış ve onaylanmıştır."
+        )
+        return {"next_step": decision.next, "messages": [closing_msg]}
+        
     return {"next_step": decision.next}
 
 
@@ -135,8 +158,8 @@ def research_dept_node(state: CompanyState):
     """Araştırma ve İstihbarat Departmanı."""
     console.print("\n[bold magenta]🔬 [DEPARTMAN 1: ARAŞTIRMA & İSTİHBARAT][/bold magenta] Pazar analizi yapıyor...")
     system_prompt = (
-        "Sen Şirket Baş Araştırmacısısın. 'query_market_intelligence' aracını kullanarak "
-        "kullanıcının talebine dair güncel piyasa verilerini topla ve 2 cümleyle özetle."
+        "Sen Şirket Baş Araştırmacısısın. 'query_market_intelligence' aracını çağırarak "
+        "kullanıcının talebine dair güncel piyasa verilerini topla."
     )
     messages = state["messages"] + [HumanMessage(content=system_prompt)]
     response = research_llm.invoke(messages)
@@ -145,10 +168,10 @@ def research_dept_node(state: CompanyState):
         console.print(f"   🔧 [Araç]: {response.tool_calls[0]['name']}")
         tool_node = ToolNode(research_tools)
         tool_res = tool_node.invoke({"messages": [response]})
-        final_summary = research_llm.invoke(
-            state["messages"] + [response] + tool_res["messages"] + [HumanMessage(content="Bulguları 2 cümleyle özetle.")]
-        )
-        return {"messages": [final_summary], "research_summary": get_text(final_summary.content)}
+        tool_msg = tool_res["messages"][0]
+        summary_text = get_text(tool_msg.content)
+        report_msg = AIMessage(content=f"Araştırma Bulguları: {summary_text}")
+        return {"messages": [response, tool_msg, report_msg], "research_summary": summary_text}
         
     return {"messages": [response], "research_summary": get_text(response.content)}
 
@@ -168,10 +191,10 @@ def engineering_dept_node(state: CompanyState):
         console.print(f"   🔧 [Araç]: {response.tool_calls[0]['name']}")
         tool_node = ToolNode(engineering_tools)
         tool_res = tool_node.invoke({"messages": [response]})
-        final_summary = engineering_llm.invoke(
-            state["messages"] + [response] + tool_res["messages"] + [HumanMessage(content="Üretilen kodu ve mimariyi özetle.")]
-        )
-        return {"messages": [final_summary], "code_deliverable": get_text(final_summary.content)}
+        tool_msg = tool_res["messages"][0]
+        code_text = get_text(tool_msg.content)
+        report_msg = AIMessage(content=f"Mühendislik Çıktısı:\n{code_text}")
+        return {"messages": [response, tool_msg, report_msg], "code_deliverable": code_text}
         
     return {"messages": [response], "code_deliverable": get_text(response.content)}
 
@@ -190,11 +213,11 @@ def audit_approval_dept_node(state: CompanyState):
         console.print(f"   ⚠️ [BÜTÇE ARACI TETİKLENDİ]: {response.tool_calls[0]['name']} (Tutar: 250.000 TL)")
         tool_node = ToolNode(audit_tools)
         tool_res = tool_node.invoke({"messages": [response]})
-        final_summary = audit_llm.invoke(
-            state["messages"] + [response] + tool_res["messages"] + [HumanMessage(content="Bütçe tahsis durumunu özetle.")]
-        )
+        tool_msg = tool_res["messages"][0]
+        audit_text = get_text(tool_msg.content)
+        report_msg = AIMessage(content=f"Finans Denetim Raporu: {audit_text}")
         return {
-            "messages": [final_summary],
+            "messages": [response, tool_msg, report_msg],
             "allocated_budget": 250000.0,
             "is_audit_passed": True
         }
@@ -245,13 +268,7 @@ app = workflow.compile(
     interrupt_before=["Audit_Approval_Dept"]
 )
 
-# Yardımcı Metin Okuyucu
-def get_text(content) -> str:
-    if isinstance(content, str):
-        return content
-    elif isinstance(content, list):
-        return " ".join([b.get("text", "") if isinstance(b, dict) else str(b) for b in content])
-    return str(content)
+
 
 # ==============================================================================
 # 8. BÜYÜK FİNAL TEST SENARYOSU
