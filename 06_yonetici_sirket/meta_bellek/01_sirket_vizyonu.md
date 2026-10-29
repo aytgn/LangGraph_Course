@@ -1,22 +1,18 @@
-# 🌟 ŞİRKET VİZYONU & TEMEL FELSEFE MANİFESTOSU
+# 🌟 OTONOM YAZILIM EVİ & UYGULAMA STÜDYOSU MANİFESTOSU
 
 **Son Güncelleme:** 2026-10-29
 **Kurucu & Başkan:** Yönetim Kurulu Başkanı
-**Yapay Zeka Kurucu Ortak (Co-Founder):** Strateji Masası
+**Odak Alanı:** Otonom Uygulama Geliştirme, Yazılım Mimarisi & Dijital Ürün İnşası
 
 ---
 
-## 1. Varoluş Amacımız (Mission)
-Biz, insan zekası ile çoklu yapay zeka ajanlarının (Multi-Agent Systems) sinerji içinde çalıştığı,
-otonom, ölçeklenebilir ve yüksek katma değerli dijital girişimler inşa eden yeni nesil bir yapay zeka holdingiyiz.
+## 1. Varoluş Amacımız (Core Identity)
+Biz teorik raporlar üreten bir danışmanlık ya da araştırma firması **değiliz**.
+Biz, gerçek dünya problemlerini çözen somut yazılımlar, web uygulamaları, mikroservis API'leri ve otomasyon araçları tasarlayıp çalışan koda dönüştüren bir **Yapay Zeka Yazılım Evi (AI Software Studio & Venture Builder)**'ız.
 
-## 2. Temel Prensiplerimiz (Core Values)
-1. **Çift Düzlemli Ayrım (Dual-Plane):** Strateji, vizyon ve felsefe meta düzlemde özgürce tartışılır; operasyonel düzleme yalnızca net ve filtrelenmiş direktifler iner.
-2. **Kör Noktasız Karar Alma:** Hiçbir kritik karar sadece "Evet" denilerek alınmaz. Şeytanın Avukatı (The Skeptic) tarafından daima stres testine tabi tutulur.
-3. **Kalıcı Kurumsal Hafıza (Second Brain):** Tüm beyin fırtınaları, pivotlar ve mimari kararlar uçup giden chat pencerelerinde kaybolmaz; yaşayan Markdown belgelerine dönüşür.
-4. **Human-in-the-Loop Egemenliği:** Finansal risk taşıyan veya şirket kaderini belirleyen her adımda insan kurucunun onayı esastır.
-
-## 3. Uzun Vadeli Yol Haritası (North Star)
-- **Aşama 1 (Temel):** Otonom ajan orkestrasyonu (CEO, Araştırma, Kodlama, Denetim) ve yönetici masasının mükemmelleştirilmesi.
-- **Aşama 2 (Meta Düzlem):** AI Co-Founder ve İkinci Beyin entegrasyonu ile stratejik kararların otomatik belgelenmesi.
-- **Aşama 3 (Ekosistem):** Dış dünya API'leri, gerçek pazar verileri ve özerk gelir üreten mikro-girişimlerin filizlenmesi.
+## 2. Mühendislik ve Ürün İlkelerimiz
+1. **Önce Ürün Amacı & MVP:** Ne uygulaması yapacağımızı, kimin hangi derdini çözeceğini netleştirmeden tek satır kod yazmayız. Şişkin özellikler yerine keskin, çalışan bir MVP (Minimum Viable Product) hedefleriz.
+2. **Doğru İşe Doğru Altyapı (Pragmatic Tech Stack):** Gösterişli ama hantal mimarilerden kaçınırız. Görsel etkileşim gerekiyorsa `Streamlit`, yüksek hızlı servis gerekiyorsa `FastAPI`, kalıcı yerel veri gerekiyorsa `SQLite`, otomasyon gerekiyorsa `CLI / Worker` seçeriz.
+3. **Sıfır Dummy / Gerçek Çalışan Kod:** Sahte şablonlar, içi boş `pass` sınıfları veya uydurma metrikler üretmeyiz. Yazdığımız her uygulama gerçek veri modellerine, iş mantığına ve fiziksel çalıştırma betiğine (`baslat.bat`) sahiptir.
+4. **Döngüsel Kalite Güvence (QA Loop):** Yazılan her kod AST sözdizimi ve çapraz modül denetiminden geçer; hata varsa yazılımcı ve QA departmanları kendi aralarında döngüsel olarak düzeltir.
+5. **Kurucu Onayı (Human-in-the-Loop):** Mimari ve kod doğrulandıktan sonra yayına alma / fiziksel paketleme yetkisi daima Kurucu Başkan'a aittir; Başkan dilerse revizyon veya ek özellik talep ederek döngüyü devam ettirebilir.

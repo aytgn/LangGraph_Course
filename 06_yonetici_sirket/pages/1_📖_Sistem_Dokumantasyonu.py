@@ -495,9 +495,9 @@ with tab_security:
 # ------------------------------------------------------------------------------
 with tab_db:
     st.markdown("### 🗄️ SQLite Veritabanı Şeması & Kalıcılık")
-    st.caption("enterprise.db içerisinde LangGraph checkpoints ve writes yapısı:")
+    st.caption("studio_apps.db içerisinde LangGraph checkpoints ve writes yapısı:")
 
-    db_path = os.path.join(app_dir, "enterprise.db")
+    db_path = os.path.join(app_dir, "studio_apps.db")
     
     if os.path.exists(db_path):
         conn = sqlite3.connect(db_path)

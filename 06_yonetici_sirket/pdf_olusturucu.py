@@ -104,52 +104,54 @@ def generate_enterprise_documentation_pdf() -> bytes:
     pdf.set_y(25)
     pdf.set_font("ArialCustom", "B", 18)
     pdf.set_text_color(248, 250, 252)
-    pdf.cell(0, 10, "OTONOM AJAN ŞİRKETİ (ENTERPRISE AI ENGINE)", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 10, "OTONOM YAZILIM EVİ & UYGULAMA STÜDYOSU", align="C", new_x="LMARGIN", new_y="NEXT")
     
     pdf.set_font("ArialCustom", "", 10)
     pdf.set_text_color(148, 163, 184)
-    pdf.cell(0, 7, "Kurumsal Sistem Mimarisi, Kod Katmanları ve Yönetici Teknik Whitepaper'ı", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 7, "Döngüsel LangGraph Yazılım Fabrikası, AST/QA Denetimi ve Mimari Whitepaper", align="C", new_x="LMARGIN", new_y="NEXT")
     
     pdf.set_font("ArialCustom", "B", 8.5)
     pdf.set_text_color(245, 158, 11) # Gold
-    pdf.cell(0, 6, "LangGraph * Google Gemini 5-Key Failover * SQLite Kaliciligi * Human-in-the-Loop", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, "LangGraph Cyclical Studio * Gemini 5-Key Failover * SQLite App Registry * HITL", align="C", new_x="LMARGIN", new_y="NEXT")
 
     pdf.set_y(68)
     
     # 1. BÖLÜM: YÖNETİCİ HIZLI BAŞLANGIÇ ÖZETİ
-    pdf.add_section_title("1. YÖNETİCİ HIZLI BAŞLANGIÇ ÖZETİ (EXECUTIVE CHEATSHEET)")
+    pdf.add_section_title("1. YÖNETİCİ HIZLI BAŞLANGIÇ ÖZETİ (SOFTWARE STUDIO CHEATSHEET)")
     pdf.add_paragraph(
-        "Bu sistem; bağımsız düşünebilen, kendi departmanlarını koordine eden, pazar araştırması yapan, "
-        "tip-güvenli kurumsal yazılım kodu üreten ve kritik bütçe işlemlerinde insan onayı olmadan hareket etmeyen "
-        "tam otonom bir yapay zeka şirket motorudur. Karar verici (Yönetim Kurulu Başkanı), terminal veya kod karmaşası "
-        "ile uğraşmadan, doğrudan CEO ajanı ile muhatap olarak şirket operasyonlarını sevk ve idare eder."
+        "Bu sistem; teorik danışmanlık raporları yerine doğrudan çalışan yazılım uygulamaları (Streamlit Web, FastAPI REST API, "
+        "Python CLI) inşa eden tam otonom bir yapay zeka yazılım stüdyosudur. Kurucu Başkan, CPO ve CTO ajanlarla önce ne "
+        "uygulaması yapılacağını ve teknoloji yığınını tartışır; ardından döngüsel fabrika gerçek çok dosyalı kodu üretir."
     )
-    pdf.add_subsection_title("3 Adımda Proje Yönetimi:")
+    pdf.add_subsection_title("3 Adımda Uygulama İnşası:")
     pdf.add_paragraph(
-        "1. Direktif Verin: Yönetici Kokpiti sohbet çubuğuna hedefi girin (Örn: 'Fintech AI risk servisi geliştirin').\n"
-        "2. Otonom İmalat: CEO sırasıyla Araştırma ve Mühendislik departmanlarını koordine eder. Pazar analizi ve Python mikroservisi üretilir.\n"
-        "3. İnsan Onayı (HITL): Graf bütçe aşamasında duraklar. Yönetici ekrandaki 'Bütçeyi Onayla' butonuna basarak projeyi tamamlar."
+        "1. Ürün & Tech Stack Tartışması: Tartışma Odasında CPO ve CTO ile uygulama amacını ve teknolojileri netleştirin.\n"
+        "2. Döngüsel İmalat & AST/QA: PRD -> Sistem Mimarisi -> Çok Dosyalı Kodlama <-> Otomatik AST/QA düzeltme döngüsü çalışır.\n"
+        "3. Kurucu Onayı veya Revizyon (HITL): Kodu inceleyip onaylayarak baslat.bat ile diske inşa edin veya revizyon döngüsü başlatın."
     )
 
     # 2. BÖLÜM: UÇTAN UCA MİMARİ VE LANGGRAPH AKIŞI
-    pdf.add_section_title("2. UÇTAN UCA SİSTEM MİMARİSİ VE LANGGRAPH AKIŞI")
+    pdf.add_section_title("2. DÖNGÜSEL YAZILIM FABRİKASI VE LANGGRAPH MİMARİSİ")
     pdf.add_paragraph(
-        "Şirket mimarisi 'Supervisor Pattern' (Merkezi Orkestratör) modeline dayanır. "
-        "CEO düğümü, StateGraph ortak hafızasını denetler ve Pydantic CEORouteDecision şemasıyla sıradaki departmanı belirler."
+        "Stüdyo mimarisi doğrusal bir hat değil, merkezi Studio_Director etrafında dönen canlı bir döngüdür. "
+        "QA/AST hatası yakalandığında kod otomatik olarak Lead_Developer birimine geri döner; Kurucu geri bildirim verdiğinde "
+        "System_Architect veya Lead_Developer düğümüne yeniden yönlendirilir."
     )
-    pdf.add_code_block("""[Yonetim Kurulu Direktifi] -> START -> [CEO / Executive Board]
-  |-- (Arastirma Eksikse)    -> [Research_Dept: query_market_intelligence] -> [CEO]
-  |-- (Yazilim Kodu Eksikse) -> [Engineering_Dept: generate_production_code] -> [CEO]
-  `-- (Butce Gerekiyorsa)    -> [HITL Guvenlik Kilidi] -> [Insan Onayi] -> [Audit_Dept] -> [CEO] -> FINISH""")
+    pdf.add_code_block("""[Kurucu Talebi] -> START -> [Studio_Director (Dongu Merkezi)]
+  |-- (PRD Eksikse)       -> [Product_Lead (CPO)]     -> [Studio_Director]
+  |-- (Mimari Eksikse)    -> [System_Architect (CTO)] -> [Studio_Director]
+  |-- (Kodlama / Duzeltme)-> [Lead_Developer]         -> [Studio_Director]
+  |-- (AST & QA Kontrolu) -> [QA_Security_Lead]       -> (Hata Varsa Lead_Developer'a Doner!)
+  `-- (QA Gectiyse)       -> [HITL Kurucu Kapisi]     -> [Deployment_Gate (baslat.bat)] -> FINISH""")
 
-    pdf.add_subsection_title("CompanyState Ortak Durum Şeması:")
+    pdf.add_subsection_title("CompanyState Yazılım Durum Şeması:")
     pdf.add_paragraph(
-        "- messages: Konuşma ve araç çağrı geçmişi (add_messages reducer ile toplanır).\n"
-        "- next_step: CEO'nun belirlediği sıradaki hedef düğüm.\n"
-        "- research_summary: Araştırma departmanının piyasa analizi çıktısı.\n"
-        "- code_deliverable: Mühendislik departmanının ürettiği Python kaynak kodu.\n"
-        "- allocated_budget: Proje için bloke edilen şirket bütçesi (250.000 TL).\n"
-        "- is_audit_passed: Finans ve güvenlik denetim onay durumu (Boolean)."
+        "- app_name, app_slug, app_type: Uygulamanın kimliği ve arayüz tipi (Streamlit / FastAPI / CLI).\n"
+        "- prd_spec & core_features: Ürün şartnamesi ve MVP fonksiyonel özellik listesi.\n"
+        "- tech_stack & architecture_spec: Seçilen kütüphaneler, veritabanı katmanı ve modül sözleşmesi.\n"
+        "- code_files & total_loc: Üretilen çoklu Python dosyaları haritası ve gerçek kod satır sayısı.\n"
+        "- qa_passed, qa_issues & revision_count: Deterministik Python AST ve AI kalite denetim döngüsü verileri.\n"
+        "- transition_log & cycle_count: Departmanlar arası tüm ileri/geri geçişlerin zaman damgalı izi."
     )
 
     # 3. BÖLÜM: ÇEKİRDEK KOD MİMARİSİ

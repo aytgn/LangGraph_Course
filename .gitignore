@@ -33,6 +33,7 @@ enterprise.db*
 *.log
 *.bak
 meta_bellek/.backups/
+06_yonetici_sirket/meta_bellek/.backups/
 kitap_notlarim.json
 kisisel_notlar.json
 .pytest_cache/

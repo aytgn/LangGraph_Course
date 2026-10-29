@@ -1,10 +1,10 @@
 """
 ================================================================================
-🌉 DİREKTİF KÖPRÜSÜ (STRATEGIC DIRECTIVE BRIDGE)
+🌉 ÜRÜN & MİMARİ ŞARTNAME KÖPRÜSÜ (PRODUCT-TO-ENGINEERING SPEC BRIDGE)
 ================================================================================
-Meta-Düzlemde (Kurucular Odası & İkinci Beyin) alınan stratejik ve felsefi
-kararları, operasyonel çoklu ajan şirketinin (CEO, Araştırma, Mühendislik, Denetim)
-hemen yürütebileceği somut görev briflerine dönüştüren köprü mekanizması.
+Ürün & Mimari Masası'nda tartışılan uygulama fikrini, amacını ve teknoloji
+kararlarını; Otonom Yazılım Fabrikası'nın (PRD -> Mimari -> Kodlama -> QA)
+doğrudan inşa edebileceği net mühendislik brifine dönüştürür.
 ================================================================================
 """
 
@@ -12,51 +12,50 @@ import os
 import sys
 from typing import List, Dict
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_app_dir = os.path.dirname(_current_dir)
+_root_dir = os.path.dirname(_app_dir)
+for _p in (_app_dir, _root_dir):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 from meta_katman.meta_motoru import (
     get_scribe_llm,
     OperationalBriefSynthesis,
-    format_history_for_prompt
+    format_history_for_prompt,
 )
 from meta_katman.ikinci_beyin import save_operational_directive
 
 
 def bridge_meta_to_operational_directive(chat_history: List[Dict[str, str]], custom_notes: str = "") -> Dict[str, str]:
     """
-    Meta-Düzlem sohbetini veya kararını, operasyonel şirket CEO'sunun
-    anlayacağı net bir yönetim kurulu direktifine dönüştürür.
-    
-    Döndürdüğü sözlük:
-    {
-        "title": "Görev Başlığı",
-        "directive_text": "CEO'ya aktarılacak nihai görev metni",
-        "file_path": "meta_bellek altındaki kaydedilmiş dosya yolu"
-    }
+    Ürün ve teknoloji tartışmasını, Yazılım Fabrikası için somut bir
+    Uygulama Geliştirme Şartnamesine dönüştürür.
     """
-    history_str = format_history_for_prompt(chat_history, max_turns=12)
+    history_str = format_history_for_prompt(chat_history, max_turns=14)
 
     prompt = (
-        "Sen Yönetim Kurulu Genel Sekreterisin (Chief of Staff).\n"
-        "Kurucular Odası'nda yapılan aşağıdaki stratejik tartışmayı ve kurucu notunu incele. "
-        "Operasyonel Çoklu Ajan Şirketimizin CEO'suna (Supervisor Ajanı) iletilmek üzere "
-        "net, aksiyon odaklı ve departmanların (Araştırma Departmanı pazar verisi toplayacak, "
-        "Mühendislik Departmanı kod/mimari üretecek, Denetim Departmanı bütçe çıkaracak) "
-        "çalıştırabileceği bir operasyonel görev direktifi hazırla.\n\n"
+        "Sen Teknik Ürün Yöneticisisin (Technical PM).\n"
+        "Aşağıdaki ürün ve teknoloji tartışmasını inceleyerek Otonom Yazılım Fabrikası'na iletilecek "
+        "net ve eksiksiz bir **Uygulama Geliştirme Şartnamesi** hazırla.\n\n"
+        "Şartnamede şunlar açıkça yer almalıdır:\n"
+        "1. Uygulamanın Adı ve Somut Amacı (Hangi problemi çözüyor?)\n"
+        "2. Uygulama Türü ve Tercih Edilen Altyapı (Örn: Streamlit Web Uygulaması / FastAPI REST API / CLI Aracı, SQLite / JSON depolama)\n"
+        "3. Uygulanacak Somut MVP Özellikleri ve Veri Akışı\n\n"
         f"--- TARTIŞMA GEÇMİŞİ ---\n{history_str}\n\n"
-        f"--- KURUCU EK NOTU ---\n{custom_notes}\n"
+        f"--- EK TEKNİK NOTLAR ---\n{custom_notes}\n"
     )
 
     scribe_model = get_scribe_llm().with_structured_output(OperationalBriefSynthesis)
     brief = scribe_model.invoke(prompt)
 
-    # İkinci Beyin'e direktif olarak kaydet
     file_path = save_operational_directive(
         title=brief.directive_title,
-        task_brief=brief.actionable_prompt
+        task_brief=brief.actionable_prompt,
     )
 
     return {
         "title": brief.directive_title,
         "directive_text": brief.actionable_prompt,
-        "file_path": file_path
+        "file_path": file_path,
     }
