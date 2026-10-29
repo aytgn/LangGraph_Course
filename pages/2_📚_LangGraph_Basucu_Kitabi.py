@@ -31,7 +31,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Tam ekran (Chromeless) E-Kitap görünümü: Streamlit kenar boşluklarını ve barlarını gizler
+# Linear.app tarzı kömür siyahı minimalizm ve temiz arayüz yapılandırması
 st.markdown(
     """
     <style>
@@ -52,7 +52,8 @@ st.markdown(
             width: 100vw !important;
             height: 100vh !important;
             overflow: hidden !important;
-            background-color: #090d16 !important;
+            background-color: #09090b !important;
+            color: #e4e4e7 !important;
         }
         .block-container, [data-testid="stMainBlockContainer"] {
             padding: 0 !important;
@@ -71,6 +72,7 @@ st.markdown(
             margin: 0 !important;
             padding: 0 !important;
             z-index: 9999 !important;
+            background-color: #09090b !important;
         }
     </style>
     """,

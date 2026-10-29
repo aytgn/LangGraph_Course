@@ -2,9 +2,9 @@
 ================================================================================
 📖 OTONOM AJAN ŞİRKETİ - KAPSAMLI SİSTEM DÖKÜMANTASYONU & MİMARİ REHBERİ 📖
 ================================================================================
-Bu sayfa, uygulamanın nasıl çalıştığını en ince detayına kadar açıklayan,
-kod katmanlarını, LangGraph akış şemalarını, veritabanı yapısını ve hızlı kullanım
-kılavuzunu sunan harici (external) referans dökümantasyon merkezidir.
+Linear / Apple Human Interface Standartlarında Rafine Edilmiş Kurumsal Başucu Kılavuzu.
+Uçtan uca sistem mimarisi, LangGraph akışları, çekirdek kod katmanları,
+SQLite kalıcılığı, 5'li key havuzu failover motoru, Meta-Düzlem ve SWE-Agent.
 ================================================================================
 """
 
@@ -14,13 +14,22 @@ import sqlite3
 import pandas as pd
 import streamlit as st
 from datetime import datetime
+from dotenv import load_dotenv
 
-# PDF Üretici Modülü
+# Dizin Yapılandırması ve Bağımlılıklar
 current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.abspath(os.path.join(current_dir, "..")))
-from pdf_olusturucu import generate_enterprise_documentation_pdf
+root_dir = os.path.abspath(os.path.join(current_dir, ".."))
+sys.path.insert(0, root_dir)
+sys.path.insert(0, os.path.join(root_dir, "05_otonom_ajan_sirketi"))
 
-# Sayfa Yapılandırması
+load_dotenv(os.path.join(root_dir, ".env"))
+
+from pdf_olusturucu import generate_enterprise_documentation_pdf
+from model_factory import API_KEY_POOL, TARGET_MODEL
+
+# ==============================================================================
+# 1. Sayfa Yapılandırması & Linear / Apple Minimalist Tasarım Sistemi
+# ==============================================================================
 st.set_page_config(
     page_title="Sistem Dökümantasyonu & Mimari Rehber",
     page_icon="📖",
@@ -28,85 +37,164 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Kurumsal Stil
+# Linear / Apple Human Interface Standartlarında Rafine Dark Tema
 st.markdown("""
 <style>
-    .main {
-        background-color: #0B0F19;
-        color: #F3F4F6;
+    /* Renk Paleti ve Değişkenler */
+    :root {
+        --canvas: #08090A;
+        --surface-1: #101216;
+        --surface-2: #15181E;
+        --surface-3: #1C2028;
+        --hairline: rgba(255, 255, 255, 0.08);
+        --hairline-strong: rgba(255, 255, 255, 0.15);
+        --text-primary: #F3F4F6;
+        --text-secondary: #9CA3AF;
+        --text-tertiary: #6B7280;
+        --accent: #5E6AD2;
+        --accent-hover: #6E7BF5;
     }
+
+    /* Ana Tuval */
+    .stApp, .main {
+        background-color: var(--canvas) !important;
+        color: var(--text-primary) !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif !important;
+    }
+
+    /* Kenar Çubuğu (Sidebar) */
+    [data-testid="stSidebar"] {
+        background-color: var(--surface-1) !important;
+        border-right: 1px solid var(--hairline) !important;
+    }
+
+    /* Üst Durum Çubuğu (Executive Header) */
     .doc-header {
-        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
-        border: 1px solid #334155;
-        border-radius: 12px;
-        padding: 24px;
-        margin-bottom: 24px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        background-color: var(--surface-1);
+        border: 1px solid var(--hairline);
+        border-radius: 10px;
+        padding: 20px 24px;
+        margin-bottom: 22px;
     }
-    .quick-card {
-        background-color: #1E293B;
-        border-left: 4px solid #38BDF8;
-        border-radius: 8px;
-        padding: 16px 20px;
-        margin-bottom: 14px;
-    }
-    .security-card {
-        background-color: #1E293B;
-        border-left: 4px solid #EF4444;
-        border-radius: 8px;
-        padding: 16px 20px;
-        margin-bottom: 14px;
-    }
+
+    /* Minimalist Rozetler (Pills) */
     .badge-gold {
-        background-color: rgba(245, 158, 11, 0.15);
-        color: #F59E0B;
-        border: 1px solid #F59E0B;
+        background-color: rgba(245, 158, 11, 0.08);
+        color: #FBBF24;
+        border: 1px solid rgba(245, 158, 11, 0.20);
         padding: 4px 10px;
         border-radius: 6px;
-        font-weight: 600;
-        font-size: 13px;
+        font-weight: 500;
+        font-size: 12px;
+        letter-spacing: 0.02em;
     }
     .badge-cyan {
-        background-color: rgba(6, 182, 212, 0.15);
-        color: #06B6D4;
-        border: 1px solid #06B6D4;
+        background-color: rgba(94, 106, 210, 0.08);
+        color: #828FFF;
+        border: 1px solid rgba(94, 106, 210, 0.20);
         padding: 4px 10px;
         border-radius: 6px;
-        font-weight: 600;
+        font-weight: 500;
+        font-size: 12px;
+        letter-spacing: 0.02em;
+    }
+    .badge-green {
+        background-color: rgba(16, 185, 129, 0.08);
+        color: #34D399;
+        border: 1px solid rgba(16, 185, 129, 0.20);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 12px;
+        letter-spacing: 0.02em;
+    }
+
+    /* Rafine İçerik Kartları */
+    .report-card {
+        background-color: var(--surface-1);
+        border: 1px solid var(--hairline);
+        border-radius: 8px;
+        padding: 18px;
+        margin-bottom: 14px;
+        transition: border 0.15s ease;
+    }
+    .report-card:hover {
+        border-color: var(--hairline-strong);
+    }
+
+    .quick-card {
+        background-color: var(--surface-1);
+        border: 1px solid var(--hairline);
+        border-left: 3px solid #828FFF;
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin-bottom: 14px;
+    }
+
+    .security-card {
+        background-color: rgba(239, 68, 68, 0.04);
+        border: 1px solid rgba(239, 68, 68, 0.25);
+        border-left: 3px solid #EF4444;
+        border-radius: 8px;
+        padding: 18px 22px;
+        margin: 16px 0;
+    }
+
+    /* Sekme Başlıkları */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 6px;
+        border-bottom: 1px solid var(--hairline);
+        padding-bottom: 4px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        padding: 8px 16px;
+        background-color: transparent;
+        border-radius: 6px;
+        color: var(--text-secondary);
         font-size: 13px;
+        font-weight: 500;
+        border: none !important;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: var(--surface-2) !important;
+        color: var(--text-primary) !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Yan Menü Navigasyonu
+# ==============================================================================
+# 2. Yan Menü (Sidebar)
+# ==============================================================================
 with st.sidebar:
     st.markdown("### 🏢 DÖKÜMANTASYON MERKEZİ")
-    st.caption("Otonom Ajan Şirketi Teknik Whitepaper")
+    st.caption("Otonom Ajan Şirketi Teknik Whitepaper v3.8")
     
     st.markdown("---")
-    st.link_button("👑 Yönetici Kokpitini Aç ↗", url="/", type="primary", use_container_width=True, help="Yönetici Kokpiti ve CEO İletişim Masasını ayrı sekmede açar.")
-    st.link_button("📚 LangGraph Başucu Kitabı ↗", url="/LangGraph_Basucu_Kitabi", use_container_width=True, help="12 bölümlük karanlık temalı interaktif LangGraph ve Ajan Mimarisi Başucu Kitabını yeni sekmede açar.")
-    st.page_link("yonetici_masasi.py", label="👑 Kokpite Dön (Aynı Sekme)", icon="⬅️")
+    st.link_button("👑 Yönetici Kokpitini Aç ↗", url="/", type="primary", use_container_width=True, help="Yönetici Kokpiti ve CEO İletişim Masasını ayrı web sekmesinde açar.")
+    st.page_link("yonetici_masasi.py", label="⬅️ Kokpite Dön (Aynı Sekme)", icon="🏠")
     st.markdown("---")
     
-    st.markdown("#### 📑 İçindekiler")
-    st.markdown("""
-    - **1. Hızlı Yönetici Özeti** (2 Dk)
-    - **2. Uçtan Uca Sistem Mimarisi**
-    - **3. Çekirdek Kod İncelemesi**
-    - **4. Güvenlik & HITL Bütçe Kilidi**
-    - **5. SQLite Veritabanı Şeması**
-    - **6. Meta-Düzlem & İkinci Beyin (Second Brain)**
-    - **7. Otonom Kodlayıcı (SWE-Agent) Mimarisi**
-    """)
-    
+    st.markdown("#### 📡 Altyapı Radarı")
+    col_sb1, col_sb2 = st.columns(2)
+    with col_sb1:
+        st.markdown(f'<span class="badge-cyan">⚡ Model</span><br><small style="color:#9CA3AF">{TARGET_MODEL}</small>', unsafe_allow_html=True)
+    with col_sb2:
+        st.markdown(f'<span class="badge-green">🔑 Key Havuzu</span><br><small style="color:#9CA3AF">{len(API_KEY_POOL)} Adet (.env)</small>', unsafe_allow_html=True)
+        
+    st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+    col_sb3, col_sb4 = st.columns(2)
+    with col_sb3:
+        st.markdown('<span class="badge-gold">👑 CEO Ajanı</span><br><small style="color:#9CA3AF">Hazır</small>', unsafe_allow_html=True)
+    with col_sb4:
+        st.markdown('<span class="badge-cyan">💾 Veritabanı</span><br><small style="color:#9CA3AF">enterprise.db</small>', unsafe_allow_html=True)
+
     st.markdown("---")
-    st.markdown("##### 📥 Resmi Rapor İndir")
+    st.markdown("##### 📥 Resmi Whitepaper İndir")
     try:
-        pdf_data_sb = generate_enterprise_documentation_pdf()
+        pdf_bytes_sb = generate_enterprise_documentation_pdf()
         st.download_button(
             label="📥 Tüm Dökümanı PDF İndir (.pdf)",
-            data=pdf_data_sb,
+            data=pdf_bytes_sb,
             file_name="Otonom_Ajan_Sirketi_Mimari_Whitepaper.pdf",
             mime="application/pdf",
             type="primary",
@@ -115,89 +203,110 @@ with st.sidebar:
         )
     except Exception as e:
         st.caption(f"PDF motoru: {str(e)[:30]}")
-        
-    st.caption("Versiyon: v3.8 Enterprise SWE\nMotor: LangGraph + SQLite + SWE-Agent")
 
-# Ana Başlık
+    st.markdown("---")
+    st.caption("Mimari: LangGraph StateGraph\nKalıcılık: SQLite Checkpoints\nFailover: 5-Key Dynamic Pool")
+
+# ==============================================================================
+# 3. Ana Başlık & Yönetici Durum Kartı
+# ==============================================================================
 st.markdown("""
 <div class="doc-header">
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <div>
-            <h1 style="margin:0; font-size: 26px; color: #F8FAFC;">📖 OTONOM AJAN ŞİRKETİ | SİSTEM DÖKÜMANTASYONU</h1>
-            <p style="margin: 4px 0 0 0; color: #94A3B8; font-size: 14px;">
-                Mühendislik Standartları • Supervisor Orkestrasyonu • SQLite Kalıcılığı • Otonom SWE-Agent
+            <h1 style="margin: 0; font-size: 24px; color: #F3F4F6; font-weight: 600;">📖 OTONOM AJAN ŞİRKETİ | SİSTEM DÖKÜMANTASYONU</h1>
+            <p style="margin: 4px 0 0 0; color: #9CA3AF; font-size: 13px;">
+                Yönetici Başucu Kılavuzu • Supervisor Orkestrasyonu • SQLite Kalıcılığı • 5'li Key Failover • SWE-Agent
             </p>
         </div>
-        <div>
-            <span class="badge-gold">Kurumsal Dökümantasyon</span>
+        <div style="text-align: right;">
+            <span class="badge-gold">Kurumsal Teknik Doküman</span><br>
+            <span style="font-size: 11px; color: #6B7280; margin-top: 4px; display: inline-block;">Versiyon: v3.8 Enterprise</span>
         </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Sekmeler
+# ==============================================================================
+# 4. Kapsamlı Sekmeler (7 Tam Bölüm)
+# ==============================================================================
 tab_quick, tab_arch, tab_code, tab_security, tab_db, tab_meta_doc, tab_swe_doc = st.tabs([
-    "⚡ 1. Hızlı Kullanım Özeti (Executive Cheatsheet)",
-    "🏗️ 2. Uçtan Uca Mimari & LangGraph Akışı",
-    "💻 3. Çekirdek Kod Katmanı",
-    "🛑 4. Güvenlik, HITL & API Key Rotasyonu",
+    "⚡ 1. Hızlı Kullanım Özeti (Cheatsheet)",
+    "🏗️ 2. Uçtan Uca Mimari & Akış Şeması",
+    "💻 3. Çekirdek Kod Katmanı (Deep-Dive)",
+    "🛑 4. Güvenlik, HITL & Key Rotasyonu",
     "🗄️ 5. SQLite Veritabanı Şeması",
-    "🏛️ 6. Meta-Düzlem & İkinci Beyin (Second Brain)",
+    "🏛️ 6. Meta-Düzlem & İkinci Beyin",
     "🛠️ 7. Otonom Kodlayıcı (SWE-Agent)"
 ])
 
-# ==============================================================================
+# ------------------------------------------------------------------------------
 # TAB 1: HIZLI KULLANIM ÖZETİ
-# ==============================================================================
+# ------------------------------------------------------------------------------
 with tab_quick:
     st.markdown("### ⚡ 2 Dakikada Anlama Kılavuzu (Executive Quickstart)")
-    st.caption("Karmaşık kod yapılarına girmeden sistemin mantığını, işleyişini ve kullanımını kavrayın:")
+    st.caption("Kod ve terminal detaylarına boğulmadan sistemin mantığını, işleyişini ve kontrol adımlarını kavrayın:")
 
     col_q1, col_q2, col_q3 = st.columns(3)
     
     with col_q1:
         st.markdown("""
         <div class="quick-card">
-            <h4 style="color:#38BDF8; margin-top:0;">1️⃣ Direktif Verin</h4>
-            <p style="color:#CBD5E1; font-size:14px;">
-                Yönetici Masası'ndaki sohbet çubuğuna şirket hedefi girilir. (Örn: <i>"Fintech için fraud tespit mikroservisi oluşturun"</i>).
+            <h4 style="color:#828FFF; margin:0 0 6px 0; font-size:15px;">1️⃣ Direktif Verin</h4>
+            <p style="color:#9CA3AF; font-size:13px; line-height:1.5; margin:0;">
+                Yönetici Masası'ndaki sohbet alanına şirket hedefini girin (Örn: <i>"Fintech için AI kredi risk skorlama mikroservisi geliştirin"</i>).
             </p>
         </div>
         """, unsafe_allow_html=True)
         
     with col_q2:
         st.markdown("""
-        <div class="quick-card">
-            <h4 style="color:#F59E0B; margin-top:0;">2️⃣ Otonom İmalat</h4>
-            <p style="color:#CBD5E1; font-size:14px;">
-                CEO sırasıyla Araştırma Departmanı'nı ve Mühendislik Departmanı'nı koordine eder. Pazar analizi ve Python kodu üretilir.
+        <div class="quick-card" style="border-left-color: #FBBF24;">
+            <h4 style="color:#FBBF24; margin:0 0 6px 0; font-size:15px;">2️⃣ Otonom İmalat</h4>
+            <p style="color:#9CA3AF; font-size:13px; line-height:1.5; margin:0;">
+                CEO sırasıyla Araştırma Departmanı'nı ve Mühendislik Departmanı'nı görevlendirir. Pazar analizi ve Python kodu üretilir.
             </p>
         </div>
         """, unsafe_allow_html=True)
         
     with col_q3:
         st.markdown("""
-        <div class="quick-card">
-            <h4 style="color:#10B981; margin-top:0;">3️⃣ İnsan Onayı (HITL)</h4>
-            <p style="color:#CBD5E1; font-size:14px;">
-                Sistem 250.000 TL bütçe tahsisi öncesinde donar. Yönetim Kurulu Başkanı (Siz) ekrandaki butona basarak onayı tamamlar.
+        <div class="quick-card" style="border-left-color: #34D399;">
+            <h4 style="color:#34D399; margin:0 0 6px 0; font-size:15px;">3️⃣ İnsan Onayı (HITL)</h4>
+            <p style="color:#9CA3AF; font-size:13px; line-height:1.5; margin:0;">
+                Sistem 250.000 TL bütçe aşamasında duraklar. Yönetici ekrandaki <b>'Bütçeyi Onayla'</b> butonuna basarak projeyi tamamlar.
             </p>
         </div>
         """, unsafe_allow_html=True)
 
     st.markdown("---")
+    st.markdown("#### 📊 Sistem Performans Metrikleri & Avantajlar")
+    
+    col_met1, col_met2, col_met3, col_met4 = st.columns(4)
+    with col_met1:
+        st.metric("Ortalama Yanıt Hızı", "1.5 - 2.5 sn", delta="20x Hızlanma (Flash-Lite)")
+    with col_met2:
+        st.metric("API Key Havuzu", f"{len(API_KEY_POOL)} Adet Anahtar", delta="Kesintisiz Failover")
+    with col_met3:
+        st.metric("Bütçe Güvenlik Kilidi", "Human-in-the-Loop", delta="250.000 TL Onay Bariyeri")
+    with col_met4:
+        st.metric("Kalıcılık Motoru", "SQLite (SqliteSaver)", delta="Çökme Korumalı")
+
+    st.markdown("---")
     st.markdown("#### 💡 Temel Kavramlar Sözlüğü")
     
     faq_data = [
-        {"Kavram": "StateGraph", "Açıklama": "LangGraph'ın temel çizelge motorudur. Düğümleri (Ajanları) ve durum geçişlerini yönetir."},
-        {"Kavram": "Supervisor Pattern", "Açıklama": "Tüm kararların merkezi bir CEO tarafından Pydantic şemasıyla verildiği orkestrasyon modeli."},
-        {"Kavram": "Human-in-the-Loop (HITL)", "Açıklama": "Yüksek riskli (para, veri silme vb.) işlemlerde yapay zekanın duraklayıp insan kararı beklemesi."},
-        {"Kavram": "SqliteSaver", "Açıklama": "Grafın her adımını SQLite veritabanına anlık kaydeden ve sunucu çökse bile kaldığı yeri unutmayan kalıcılık katmanı."},
-        {"Kavram": "Key Failover Pool", "Açıklama": ".env'deki 5 anahtar arasında kota veya yoğunluk anında milisaniyeler içinde geçiş yapan dayanıklılık motoru."}
+        {"Kavram": "StateGraph", "Açıklama": "LangGraph'ın temel grafik motorudur. Departmanları (Düğümleri) ve durum geçişlerini yönetir."},
+        {"Kavram": "Supervisor Pattern", "Açıklama": "Tüm şirket kararlarının merkezi bir CEO tarafından Pydantic şemasıyla verildiği orkestrasyon modeli."},
+        {"Kavram": "Human-in-the-Loop (HITL)", "Açıklama": "Bütçe harcaması gibi yüksek riskli işlemlerde yapay zekanın duraklayıp insan kararı beklemesi."},
+        {"Kavram": "SqliteSaver", "Açıklama": "Grafın her adımını SQLite veritabanına anlık kaydeden ve sunucu kapansa dahi durumu koruyan kalıcılık katmanı."},
+        {"Kavram": "Key Failover Pool", "Açıklama": ".env'deki 5 anahtar arasında kota veya yoğunluk anında milisaniyeler içinde geçiş yapan dayanıklılık motoru."},
+        {"Kavram": "Second Brain (İkinci Beyin)", "Açıklama": "Kurucular Odası'nda alınan kararları (ADR) ve operasyonel direktifleri saklayan kurumsal hafıza."},
+        {"Kavram": "SWE-Agent", "Açıklama": "Kod tabanını güvenle okuyan, test eden ve otomatik yedek alarak hata anında geri alan otonom yazılım mühendisi."}
     ]
     st.dataframe(pd.DataFrame(faq_data), use_container_width=True, hide_index=True)
 
-    # İndirme Butonları (PDF & Markdown)
+    # İndirme Alanı
     st.markdown("---")
     st.markdown("##### 📥 Kapsamlı Dokümanı Bilgisayarınıza İndirin:")
     col_dl1, col_dl2 = st.columns(2)
@@ -220,9 +329,9 @@ with tab_quick:
             use_container_width=True
         )
 
-# ==============================================================================
-# TAB 2: UÇTAN UCA MİMARİ & LANGGRAPH AKIŞI
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# TAB 2: UÇTAN UCA MİMARİ & AKIŞ ŞEMASI
+# ------------------------------------------------------------------------------
 with tab_arch:
     st.markdown("### 🏗️ Uçtan Uca Sistem Mimarisi & LangGraph Akışı")
     st.caption("Şirket organizasyonu, döngüsel (cyclic) ve koşullu (conditional) kenarlarla birbirine bağlanmış durum makinesidir.")
@@ -262,26 +371,26 @@ with tab_arch:
     """)
 
     st.markdown("---")
-    st.markdown("#### 📦 Şirket Durum Nesnesi (CompanyState)")
+    st.markdown("#### 📦 Şirket Ortak Durumu (CompanyState)")
     st.markdown("""
-    Her düğüm çalıştırıldığında bu merkezi sözlükten (State) beslenir ve çıktısını buraya yazar:
-    - `messages`: Konuşma geçmişi ve araç çağrıları (`add_messages` reducer ile listenin sonuna eklenir).
-    - `next_step`: CEO'nun belirlediği sıradaki hedef (`Research_Dept`, `Engineering_Dept`, `Audit_Approval_Dept`, `FINISH`).
-    - `research_summary`: Araştırma departmanının piyasa analizi özeti.
-    - `code_deliverable`: Mühendislik departmanının yazdığı kurumsal Python modülü.
-    - `allocated_budget`: Finans departmanının tahsis ettiği tutar (250.000 TL).
-    - `is_audit_passed`: Güvenlik ve denetim onayı (True / False).
+    Tüm departmanlar ortak bir TypedDict üzerinden haberleşir ve birbirlerinin çıktılarına erişir:
+    - **`messages`:** Konuşma ve araç çağrı geçmişi (`add_messages` reducer ile listenin sonuna eklenir).
+    - **`next_step`:** CEO'nun belirlediği sıradaki hedef düğüm (`Research_Dept`, `Engineering_Dept`, `Audit_Approval_Dept`, `FINISH`).
+    - **`research_summary`:** Araştırma departmanının piyasa analizi çıktısı.
+    - **`code_deliverable`:** Mühendislik departmanının yazdığı kurumsal Python modülü.
+    - **`allocated_budget`:** Finans departmanının tahsis ettiği tutar (250.000 TL).
+    - **`is_audit_passed`:** Finans ve güvenlik denetim onay durumu (Boolean).
     """)
 
-# ==============================================================================
-# TAB 3: ÇEKİRDEK KOD KATMANI
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# TAB 3: ÇEKİRDEK KOD KATMANI (DEEP-DIVE)
+# ------------------------------------------------------------------------------
 with tab_code:
     st.markdown("### 💻 Çekirdek Kod Katmanı ve Modül İncelemesi")
-    st.caption("Projede çalışan temel Python bileşenleri ve kod blokları:")
+    st.caption("Projenin arka planında çalışan kritik modüllerin kaynak kodları:")
 
     code_tab1, code_tab2, code_tab3 = st.tabs([
-        "1. model_factory.py (Key Rotasyonu)",
+        "1. model_factory.py (5'li Key Rotasyonu)",
         "2. sirket_motoru.py (Departman Düğümleri)",
         "3. LangGraph Derlemesi & HITL"
     ])
@@ -289,6 +398,9 @@ with tab_code:
     with code_tab1:
         st.markdown("**Dinamik 5'li API Key Rotasyon Motoru:**")
         st.code("""
+# model_factory.py
+TARGET_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+
 class KeyRotatingGeminiLLM(Runnable):
     def invoke(self, input: Any, config: Optional[dict] = None, **kwargs) -> Any:
         total_keys = len(self.api_keys)
@@ -301,7 +413,7 @@ class KeyRotatingGeminiLLM(Runnable):
                 self.active_index = idx
                 return response
             except Exception as e:
-                # Kota veya sunucu hatasında bir sonraki anahtara geç!
+                # Kota (429), yoğunluk (503) veya zaman aşımında (504) sonraki anahtara geç!
                 next_idx = (idx + 1) % total_keys
                 _print_key_rotate_warning(idx, next_idx, str(e), self.model_name)
                 continue
@@ -311,16 +423,17 @@ class KeyRotatingGeminiLLM(Runnable):
     with code_tab2:
         st.markdown("**CEO Durum Bilinci ve Doğrudan Yönlendirme:**")
         st.code("""
+# 05_otonom_ajan_sirketi/sirket_motoru.py
 def ceo_supervisor_node(state: CompanyState):
     has_research = bool(state.get("research_summary"))
     has_code = bool(state.get("code_deliverable"))
     has_audit = bool(state.get("is_audit_passed"))
     
     prompt = (
-        "Sen CEO'sun. Şirket Durumu:\\n"
-        f"- Pazar Araştırması: {'TAMAMLANDI' if has_research else 'EKSİK'}\\n"
-        f"- Mühendislik Kodu : {'TAMAMLANDI' if has_code else 'EKSİK'}\\n"
-        f"- Bütçe Denetimi   : {'TAMAMLANDI' if has_audit else 'EKSİK'}\\n"
+        "Sen Otonom Şirketin CEO'susun. MEVCUT ŞİRKET DURUMU:\\n"
+        f"- 1. Pazar Araştırması : {'TAMAMLANDI' if has_research else 'EKSİK'}\\n"
+        f"- 2. Mühendislik Kodu  : {'TAMAMLANDI' if has_code else 'EKSİK'}\\n"
+        f"- 3. Bütçe Denetimi/Onay : {'TAMAMLANDI' if has_audit else 'EKSİK'}\\n\\n"
         "Kurallar: Eksik olan departmanı sırayla seç. Hepsi tamamsa 'FINISH' seç."
     )
     decision = ceo_llm.invoke(messages)
@@ -330,26 +443,29 @@ def ceo_supervisor_node(state: CompanyState):
     with code_tab3:
         st.markdown("**LangGraph Derleme ve SQLite Checkpointer Bağlantısı:**")
         st.code("""
-conn = sqlite3.connect("enterprise.db", check_same_thread=False)
+# SQLite Kalıcılık Katmanı
+db_path = os.path.join(os.path.dirname(__file__), "enterprise.db")
+conn = sqlite3.connect(db_path, check_same_thread=False)
 memory = SqliteSaver(conn)
 
+# Bütçe öncesi duraklatılan kurumsal graf
 app = workflow.compile(
     checkpointer=memory,
     interrupt_before=["Audit_Approval_Dept"]  # Finans işlemi öncesi grafı dondur!
 )
         """, language="python")
 
-# ==============================================================================
-# TAB 4: GÜVENLİK, HITL & API KEY ROTASYONU
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# TAB 4: GÜVENLİK, HITL & KEY ROTASYONU
+# ------------------------------------------------------------------------------
 with tab_security:
     st.markdown("### 🛑 Güvenlik, Human-in-the-Loop & API Key Failover")
     st.caption("Sistemin kurumsal ortamlarda güvenle çalışmasını sağlayan mimari tedbirler:")
 
     st.markdown("""
     <div class="security-card">
-        <h4 style="color:#EF4444; margin-top:0;">🛡️ Kritik İşlem Kapısı (Human-in-the-Loop Gate)</h4>
-        <p style="color:#CBD5E1; font-size:14px;">
+        <h4 style="color:#EF4444; margin:0 0 8px 0; font-size:15px;">🛡️ Kritik İşlem Kapısı (Human-in-the-Loop Gate)</h4>
+        <p style="color:#CBD5E1; font-size:13px; line-height:1.5; margin:0;">
             Yapay zeka modellerinin bütçe harcaması veya dış dünyaya kaynak tahsisi yapması kabul edilemez bir risktir. 
             Bu nedenle <code>interrupt_before=['Audit_Approval_Dept']</code> parametresi ile süreç dondurulur.
             Yönetim Kurulu Başkanı web arayüzünden bütçeyi inceleyip <b>'ONAYLA'</b> butonuna basmadığı sürece işlem yapılamaz.
@@ -360,22 +476,22 @@ with tab_security:
     st.markdown("#### 🔑 5'li API Key Havuzunun Çalışma Prensibi")
     st.markdown("""
     1. Sistem `.env` dosyasındaki `GOOGLE_API_KEYS` listesini okur.
-    2. Satır içi yorumlar (`#4.KEY`) ve boşluklar temizlenerek havuz belleğe alınır.
+    2. Satır içi yorumlar (`#4.KEY`) ve boşluklar dinamik olarak temizlenir.
     3. Google AI Studio serbest katmanında bir anahtar `429 (Kota Doldu)`, `503 (Sunucu Yoğun)` veya `504 (Zaman Aşımı)` verdiğinde:
-       - Kod hata vermez.
+       - Kod çökmez veya donmaz.
        - Konsola ve loglara rotasyon uyarısı basılır.
        - Bir sonraki anahtar (Key #2, Key #3...) anında devreye girer.
-    4. İleride `.env` dosyasına 10 yeni anahtar eklense bile Python koduna tek satır dokunulması gerekmez.
+    4. İleride `.env` dosyasına 10 yeni anahtar eklense dahi Python koduna tek satır dokunulması gerekmez.
     """)
 
-# ==============================================================================
+# ------------------------------------------------------------------------------
 # TAB 5: SQLITE VERİTABANI ŞEMASI
-# ==============================================================================
+# ------------------------------------------------------------------------------
 with tab_db:
     st.markdown("### 🗄️ SQLite Veritabanı Şeması & Kalıcılık")
     st.caption("enterprise.db içerisinde LangGraph checkpoints ve writes yapısı:")
 
-    db_path = os.path.join(os.path.dirname(__file__), "..", "05_otonom_ajan_sirketi", "enterprise.db")
+    db_path = os.path.join(root_dir, "05_otonom_ajan_sirketi", "enterprise.db")
     
     if os.path.exists(db_path):
         conn = sqlite3.connect(db_path)
@@ -389,84 +505,60 @@ with tab_db:
         st.markdown("**1. `checkpoints` Tablo Şeması:**")
         st.dataframe(df_cols[["Sütun Adı", "Veri Tipi", "PK"]], use_container_width=True, hide_index=True)
         
-        # Son 5 Checkpoint Kaydı
-        cur.execute("SELECT thread_id, checkpoint_id, parent_checkpoint_id, type FROM checkpoints ORDER BY rowid DESC LIMIT 5;")
+        # Son Checkpoint Kayıtları
+        cur.execute("SELECT thread_id, checkpoint_id, parent_checkpoint_id, type FROM checkpoints ORDER BY rowid DESC LIMIT 8;")
         recent_records = cur.fetchall()
         df_recent = pd.DataFrame(recent_records, columns=["Thread ID", "Checkpoint ID", "Parent ID", "Tip"])
         
-        st.markdown("**2. Veritabanındaki Son 5 Checkpoint Kaydı (Canlı Veri):**")
+        st.markdown("**2. Veritabanındaki Son Checkpoint Kayıtları (Canlı Veri):**")
         st.dataframe(df_recent, use_container_width=True, hide_index=True)
         
         conn.close()
     else:
         st.info("enterprise.db dosyası henüz oluşturulmadı. Bir proje başlattığınızda otomatik üretilecektir.")
 
-# ==============================================================================
-# TAB 6: META-DÜZLEM & İKİNCİ BEYİN MİMARİSİ
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# TAB 6: META-DÜZLEM & İKİNCİ BEYİN
+# ------------------------------------------------------------------------------
 with tab_meta_doc:
-    st.markdown("### 🏛️ Çift Düzlemli Bilişsel Mimari (Dual-Plane Cognitive Architecture)")
-    st.caption("Meta-Düzlem (Kurucular Odası & İkinci Beyin) ile Operasyonel Düzlem (LangGraph Ajan Şirketi) Arasındaki Ayrım")
+    st.markdown("### 🏛️ Meta-Düzlem & İkinci Beyin (Second Brain)")
+    st.caption("Yönetici ile Yapay Zeka Kurucu Ekip arasındaki beyin fırtınalarını kalıcı kurumsal bilgiye dönüştüren katman:")
 
     st.markdown("""
-    Yapay zeka literatüründe ve kurumsal şirketlerde, yalnızca alt düzey işleri yürüten işçi ajanlar ile çalışıldığında
-    şirketin vizyonu, felsefesi ve stratejik pivotları kaybolur. Bu nedenle sistemimiz **Çift Düzlemli (Dual-Plane)** olarak yapılandırılmıştır:
-    """)
+    <div class="report-card">
+        <h4 style="color:#FBBF24; margin:0 0 6px 0; font-size:15px;">🤝 Kurucular Odası (The Founders Room)</h4>
+        <p style="color:#9CA3AF; font-size:13px; line-height:1.5; margin:0;">
+            Yöneticinin şirket vizyonunu tartıştığı 3 kritik persona mevcuttur:
+            <br>• <b>Vizyoner Co-Founder:</b> Fikirleri büyütür, pazar fırsatlarını gösterir.
+            <br>• <b>Şeytanın Avukatı (Skeptic):</b> Riskleri, batış senaryolarını ve kör noktaları acımasızca sorgular.
+            <br>• <b>Yazman & Baş Katip (Scribe):</b> İki zıt fikrin çarpışmasından nihai sentezi çıkarıp ADR formatında belgeler.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
+    st.markdown("#### 📁 Yaşayan Kurumsal Hafıza (`meta_bellek/`)")
     st.markdown("""
-    #### 1. Bilişsel Düzlemler Arasındaki Görev Dağılımı:
-    - **🏛️ Düzlem 0: Meta-Düzlem (Think-Tank & Second Brain):**
-      - **Rol:** Şirket yapısı, felsefe, vizyon, yeni ürün hipotezleri, büyük pivotlar ve şirket dışı serbest konular.
-      - **Ajanlar:** 
-        - `🤝 AI Co-Founder`: Vizyoner, ilham verici kurucu ortak.
-        - `⚡ The Skeptic (Şeytanın Avukatı)`: Kör noktaları deşen, maliyet tuzaklarını gösteren red-team eleştirmeni.
-        - `📜 Chief of Staff (Scribe)`: Tartışmaları yapılandırıp `meta_bellek/` bilgi kasasına kaydeden hafıza muhafızı.
-      - **Hafıza:** Dosya tabanlı yaşayan Markdown Bilgi Kasası (`meta_bellek/`).
-
-    - **⚙️ Düzlem 1: Operasyon Düzlemi (LangGraph Execution Engine):**
-      - **Rol:** Meta düzlemde filtrelenip onaylanan somut direktifleri icra etmek.
-      - **Ajanlar:** CEO Supervisor, Araştırma Departmanı, Mühendislik Departmanı, Denetim/Bütçe Departmanı.
-      - **Hafıza:** Durum geçişli SQLite Checkpointer (`enterprise.db`).
-
-    #### 2. Kalıcı İkinci Beyin Kasası (`meta_bellek/`):
-    - `01_sirket_vizyonu.md`: Şirketin ana manifestosu ve temel ilkeleri.
-    - `02_beyin_firtinasi_notlari/`: Tarihli, etiketli kurucu beyin fırtınaları.
-    - `03_stratejik_kararlar/`: Mimari ve Stratejik Karar Kayıtları (ADR).
-    - `04_operasyonel_direktifler/`: CEO ve operasyona aktarılan resmi görevler.
-
-    #### 3. Stratejik Direktif Köprüsü (`direktif_koprusu.py`):
-    Kurucular Odası'nda saatlerce süren serbest ve felsefi bir tartışma bittiğinde, tek bir tıkla (`🚀 Operasyona Aktar`)
-    Chief of Staff tartışmayı operasyonel bir brife dönüştürür ve CEO masasına otomatik olarak enjekte eder.
+    - `01_sirket_vizyonu.md`: Şirketin ana manifestosu ve uzun vadeli hedefleri.
+    - `02_beyin_firtinasi_notlari/`: Kurucular Odası'ndaki tüm serbest tartışmaların kayıtları.
+    - `03_stratejik_kararlar/ (ADR)`: Alınan kesin mimari ve iş kararları.
+    - `04_operasyonel_direktifler/`: CEO Ajanı'nın şirket motorunda koşması için hazırlanan net operasyonel talimatlar.
     """)
 
-# ==============================================================================
-# TAB 7: OTONOM KODLAYICI (SWE-AGENT) MİMARİSİ
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# TAB 7: OTONOM KODLAYICI (SWE-AGENT)
+# ------------------------------------------------------------------------------
 with tab_swe_doc:
-    st.markdown("### 🛠️ Otonom Yazılım Mühendisi (SWE-Agent) Mimarisi")
-    st.caption("Devin, Aider ve Claude Engineer standartlarında; dosya okuyan, kod yazan, diff çıkaran ve diske atomik yazan motor")
+    st.markdown("### 🛠️ Otonom Kodlayıcı (SWE-Agent) Mimarisi")
+    st.caption("Kendi kodunu analiz edebilen, güvenle refactor eden ve hata anında geri alabilen yapay zeka mühendisi:")
 
     st.markdown("""
-    Geleneksel chatbot'lar yalnızca havada uçuşan metinler üretirken; **SWE-Agent Motorumuz (`meta_katman/otonom_kodlayici.py`)** 
-    proje dizinindeki gerçek Python, CSS, HTML ve Markdown dosyalarını okur, değişiklikleri üretir ve sözdizimi onaylandığında diske yazar.
-
-    #### 1. Güvenlik ve AST Doğrulama Standartları (`meta_katman/kod_araclari.py`):
-    - **🛡️ Sandbox Duvarı:** Ajan yalnızca `LangGraph_Course` kök dizininde çalışabilir. Dizin dışına çıkamaz (`../`), `.env` ve `.git` gibi hassas dosyaları değiştiremez.
-    - **🧪 AST ve Derleme Denetimi:** Üretilen her kod parçası diske yazılmadan önce `ast.parse` ve `py_compile` ile denetlenir. 0 sözdizimi hatası garanti edilir.
-    - **🔄 Kendi Kendini Onarma (Self-Healing Loop):** Bir derleme hatası olursa süreç durmaz; traceback hata detayları ajana geri beslenerek kodu kendi kendine düzeltir (3 iterasyona kadar).
-    - **💾 Atomik Yazma & Snapshot:** Her dosya yazımından önce `meta_bellek/.backups/` altına zaman damgalı `.bak` yedeği alınır. İşlem `.tmp` dosyası üzerinden atomik gerçekleştirilir.
-    - **↩️ Anında Rollback:** Beğenilmeyen veya geri alınmak istenen herhangi bir değişiklik tek tıkla eski yedeğine döndürülebilir.
-
-    #### 2. SWE-Agent LangGraph Akışı:
-    1. **`analyze_node`:** Hedef dosyayı okur (`yonetici_masasi.py`, vb.) ve mevcut içeriği belleğe alır.
-    2. **`generate_patch_node`:** Kullanıcı direktifine (`instruction`) göre eksiksiz, çalışan tam yeni kodu üretir.
-    3. **`verify_syntax_node`:** Kodun sözdizimini test eder ve satır satır renkli Unified Diff üretir.
-    4. **`Human-in-the-Loop Onayı`:** Yönetici Masasında diff incelenir ve *"🚀 Onayla & Diske Yaz"* dendiğinde dosya canlı olarak güncellenir.
-
-    #### 3. Tüm Kod Tabanı Otonom Modu (Codebase-Wide Auto-Refactor):
-    Kullanıcının tek tek dosya seçmesine veya kodlama bilmesine gerek yoktur.
-    Yönetici sadece *"Arayüzü AI Slop'tan kurtar, Linear tarzı yap"* gibi bir doğal dil emri verdiğinde:
-    - **AI Mimar (`discover_relevant_files_for_task`)** tüm kod tabanını otonom tarar.
-    - Etkilenecek tüm dosyaları (örn: `yonetici_masasi.py`, dokümantasyon sayfaları) kendi kendine tespit eder.
-    - Her dosya için AST doğrulamalı kod üretir ve toplu snapshot alarak tek tıkla canlıya geçirir.
-    """)
+    <div class="report-card">
+        <h4 style="color:#34D399; margin:0 0 6px 0; font-size:15px;">🛡️ 4 Aşamalı Güvenli Sandbox Ortamı</h4>
+        <p style="color:#9CA3AF; font-size:13px; line-height:1.5; margin:0;">
+            1. <b>Dosya İnceleme (read_file_safe):</b> Dosyayı belleğe alır, sözdizimi risklerini analiz eder.<br>
+            2. <b>Yedek Alma (backup_file):</b> Değişiklik öncesi <code>meta_bellek/.backups/</code> dizinine zaman damgalı kopyasını kaydeder.<br>
+            3. <b>Hassas Yama (edit_file_patch):</b> Kod bloğunu cerrahi hassasiyetle günceller.<br>
+            4. <b>Sözdizimi Denetimi & Rollback:</b> Kod derlenmezse veya hata verirse tek tıkla eski haline geri döner.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
