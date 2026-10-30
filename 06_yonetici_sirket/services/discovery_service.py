@@ -8,12 +8,11 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from model_factory import get_gemini_llm
 from data.repositories.vault_repository import vault_repository
 from tools.registry import ToolRegistry
+from domain.schemas import ADRDecisionOutput
 from meta_katman.meta_motoru import (
     COFOUNDER_SYSTEM_PROMPT,
     SKEPTIC_SYSTEM_PROMPT,
     SCRIBE_SYSTEM_PROMPT,
-    ADRDecisionOutput,
-    BrainstormIdeaOutput,
 )
 
 

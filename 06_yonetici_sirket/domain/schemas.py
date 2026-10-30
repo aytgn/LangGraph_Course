@@ -66,3 +66,14 @@ class DirectorRouteOutput(BaseModel):
         description="Mevcut stüdyo durumuna göre işi devralacak bir sonraki departman düğümü"
     )
     reasoning: str = Field(description="Bu departmanın seçilme gerekçesi ve döngü stratejisi")
+
+
+class ADRDecisionOutput(BaseModel):
+    """Mimari Karar Kaydı (ADR) yapılandırılmış çıktısı."""
+    adr_id: str = Field(description="ADR kayıt kodu (Örn: 'ADR-005')")
+    title: str = Field(description="Alınan mimari ve altyapı kararının başlığı")
+    status: str = Field(default="KABUL EDİLDİ", description="Karar durumu (Örn: 'KABUL EDİLDİ')")
+    context: str = Field(description="Uygulamanın çözdüğü problem ve teknik gereksinim bağlamı")
+    decision: str = Field(description="Seçilen altyapı, framework, veritabanı ve modül mimarisi")
+    consequences: str = Field(description="Bu teknoloji seçiminin avantajları, sınırları ve dikkat edilecek teknik noktalar")
+
