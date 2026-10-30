@@ -5,9 +5,7 @@ Responsible for Application Scope, User Flow, Seed Data, and PRD Specification.
 
 import sys
 from pathlib import Path
-from langchain_core.messages import AIMessage
-from rich.console import Console
-
+from langchain_core.messages import AIMessage, HumanMessage
 _root = str(Path(__file__).resolve().parent.parent.parent.parent)
 if _root not in sys.path:
     sys.path.insert(0, _root)
@@ -15,17 +13,17 @@ if _root not in sys.path:
 from model_factory import get_gemini_llm
 from domain.state import CompanyState
 from domain.schemas import PRDSpecOutput
-from domain.utils import get_clean_user_directive, append_log
-
-console = Console(force_terminal=False, legacy_windows=False)
+from domain.utils import get_clean_user_directive, append_log, console
+from tools.disk_operations import sanitize_slug
 
 
 def product_lead_node(state: CompanyState) -> dict:
-    """CPO node generates PRD specification."""
+    """CPO node generates or revises PRD specification."""
     console.print("\n[bold yellow]💡 [DEPARTMAN 1: ÜRÜN & KAPSAM LİDERİ (CPO)] PRD hazırlanıyor...[/bold yellow]")
 
     user_directive = get_clean_user_directive(state)
-    founder_feedback = state.get("founder_feedback")
+    founder_feedback = (state.get("founder_feedback") or "").strip()
+    is_revision = bool(founder_feedback and state.get("prd_spec"))
 
     prompt = f"""Sen vizyoner, pratik ve ürün odaklı bir Baş Ürün Liderisin (CPO / Product Lead).
 Şirketimiz teorik raporlar yazan bir danışmanlık firması DEĞİL; doğrudan çalışan uygulamalar geliştiren bir **Yazılım Evi ve Uygulama Stüdyosudur**.
@@ -35,7 +33,7 @@ Kullanıcının direktifini incele; kullanıcı için keskin, odaklı ve hemen g
 
 KURUCU BAŞKAN DİREKTİFİ:
 {user_directive}
-{"KURUCU REVİZYON NOTU: " + founder_feedback if founder_feedback else ""}
+{"KURUCU KAPSAM REVİZYON TALEBİ: " + founder_feedback if founder_feedback else ""}
 
 KURALLAR:
 1. Uygulama tipi için: Görsel kullanıcı etkileşimi ve kontrol panelleri için 'Streamlit Web App', dış sistemlerin bağlanacağı API için 'FastAPI REST Service', komut satırı aracı için 'CLI & Automation Tool' seç.
@@ -45,20 +43,39 @@ KURALLAR:
 """
     llm = get_gemini_llm(temperature=0.3)
     structured_cpo = llm.with_structured_output(PRDSpecOutput)
-    res: PRDSpecOutput = structured_cpo.invoke([AIMessage(content=prompt)])
+    res: PRDSpecOutput = structured_cpo.invoke([HumanMessage(content=prompt)])
+    clean_slug = sanitize_slug(res.app_slug or res.app_name)
 
     console.print(f"  [green]✔ PRD Tamamlandı:[/green] {res.app_name} ({res.app_type})")
 
-    return {
+    feat_preview = "\n".join(f"- {f}" for f in (res.core_features or [])[:5])
+    msg = AIMessage(
+        content=(
+            f"💡 **[CPO — Ürün Şartnamesi {'Güncellendi' if is_revision else 'Hazır'}]:** "
+            f"**{res.app_name}** (`{res.app_type}`)\n\n"
+            f"{res.purpose_summary}\n\n"
+            f"**MVP Özellikleri:**\n{feat_preview}"
+        )
+    )
+
+    updates = {
         "app_name": res.app_name,
-        "app_slug": res.app_slug,
+        "app_slug": clean_slug,
         "app_type": res.app_type,
         "purpose_summary": res.purpose_summary,
         "core_features": res.core_features,
         "prd_spec": res.full_prd_markdown,
         "founder_feedback": None,
         "feedback_target": None,
+        "is_rejected": False,
+        "messages": [msg],
         "transition_log": append_log(
             state, "Product_Lead", f"PRD hazırlandı: {res.app_name} ({res.app_type})", "Studio_Director"
-        )
+        ),
     }
+    if is_revision:
+        updates["architecture_spec"] = None
+        updates["code_files"] = None
+        updates["code_verified_by_qa"] = False
+        updates["qa_passed"] = False
+    return updates

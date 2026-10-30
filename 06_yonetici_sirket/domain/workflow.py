@@ -60,6 +60,7 @@ class StudioWorkflowBuilder:
                 "Lead_Developer": "Lead_Developer",
                 "QA_Security_Lead": "QA_Security_Lead",
                 "Deployment_Gate": "Deployment_Gate",
+                "FINISH": END,
                 "END": END,
             }
         )

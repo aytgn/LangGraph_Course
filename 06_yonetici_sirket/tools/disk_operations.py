@@ -2,12 +2,10 @@
 Disk and Packaging Operations Tools.
 """
 
-import os
 import io
-import zipfile
 import re
-from pathlib import Path
-from typing import Dict, Tuple, Optional, Any
+import zipfile
+from typing import Dict, Tuple, Any
 from config.settings import config
 from tools.base import StudioTool
 from tools.registry import ToolRegistry
@@ -15,7 +13,7 @@ from tools.registry import ToolRegistry
 
 def sanitize_slug(raw_slug: str) -> str:
     """Normalize project name into safe filesystem directory slug."""
-    s = raw_slug.strip().lower()
+    s = (raw_slug or "").strip().lower()
     s = s.replace("ı", "i").replace("ğ", "g").replace("ü", "u").replace("ş", "s").replace("ö", "o").replace("ç", "c")
     s = re.sub(r"[^a-z0-9_]+", "_", s)
     s = re.sub(r"_+", "_", s).strip("_")
@@ -28,50 +26,57 @@ class BatchScriptGeneratorTool(StudioTool):
     def __init__(self):
         super().__init__(
             name="batch_script_generator",
-            description="Uygulama tipine göre (Streamlit, FastAPI, CLI) tek tıkla çalıştırılabilir baslat.bat üretir.",
+            description="Uygulama tipine göre (Streamlit port 8505, FastAPI port 8005, CLI) tek tıkla çalışan baslat.bat üretir.",
             department="Deployment_Gate",
             category="Packaging",
-            parameters_schema={"app_name": "str", "app_type": "str", "entrypoint": "str"}
+            parameters_schema={"app_name": "str", "app_type": "str", "entrypoint": "str"},
         )
 
     def run(self, app_name: str, app_type: str, entrypoint: str = "app.py") -> Tuple[str, str]:
         """Returns tuple of (bat_content, run_command_hint)."""
+        venv_python = str(config.PROJECT_ROOT / ".venv" / "Scripts" / "python.exe")
+
         if "FastAPI" in app_type:
-            cmd = f"uvicorn {entrypoint[:-3] if entrypoint.endswith('.py') else 'app'}:app --reload --port 8000"
-            hint = f"uvicorn {entrypoint}:app --reload --port 8000 (Swagger: http://localhost:8000/docs)"
+            mod_name = entrypoint[:-3] if entrypoint.endswith(".py") else "main"
+            hint = f"uvicorn {mod_name}:app --reload --port 8005  (Swagger UI: http://127.0.0.1:8005/docs)"
+            exec_block = (
+                "start \"\" http://127.0.0.1:8005/docs\n"
+                f"if exist \"{venv_python}\" (\n"
+                f"    \"{venv_python}\" -m uvicorn {mod_name}:app --reload --port 8005\n"
+                ") else (\n"
+                f"    python -m uvicorn {mod_name}:app --reload --port 8005\n"
+                ")"
+            )
         elif "Streamlit" in app_type:
-            cmd = f"streamlit run {entrypoint}"
-            hint = f"streamlit run {entrypoint} (Web: http://localhost:8501)"
+            hint = f"streamlit run {entrypoint} --server.port 8505  (Web UI: http://localhost:8505)"
+            exec_block = (
+                f"if exist \"{venv_python}\" (\n"
+                f"    \"{venv_python}\" -m streamlit run \"{entrypoint}\" --server.port 8505\n"
+                ") else (\n"
+                f"    python -m streamlit run \"{entrypoint}\" --server.port 8505\n"
+                ")"
+            )
         else:
-            cmd = f"python {entrypoint}"
             hint = f"python {entrypoint}"
+            exec_block = (
+                f"if exist \"{venv_python}\" (\n"
+                f"    \"{venv_python}\" \"{entrypoint}\"\n"
+                ") else (\n"
+                f"    python \"{entrypoint}\"\n"
+                ")"
+            )
 
         bat_content = f"""@echo off
 chcp 65001 >nul
 title {app_name} - AI Software Studio
 cd /d "%~dp0"
-echo ====================================================
-echo  {app_name}
-echo  Tur: {app_type}
-echo ====================================================
+echo ============================================================
+echo   {app_name}
+echo   Mimari Tur: {app_type}
+echo ============================================================
 echo.
-
-if exist "..\\..\\..\\.venv\\Scripts\\activate.bat" (
-    call "..\\..\\..\\.venv\\Scripts\\activate.bat"
-) else if exist "..\\..\\.venv\\Scripts\\activate.bat" (
-    call "..\\..\\.venv\\Scripts\\activate.bat"
-) else (
-    echo [UYARI] Sanal ortam bulunamadi, sistem Python'i kullanilacak.
-)
-
-echo Bagimliliklar kontrol ediliyor...
-pip install -r requirements.txt --quiet >nul 2>&1
-
+{exec_block}
 echo.
-echo Uygulama baslatiliyor: {cmd}
-echo.
-{cmd}
-
 pause
 """
         return bat_content, hint
@@ -86,7 +91,7 @@ class DiskExportTool(StudioTool):
             description="Üretilen tüm dosyaları ve çalıştırma betiklerini fiziksel diske (output_uygulamalar) yazar.",
             department="Deployment_Gate",
             category="Packaging",
-            parameters_schema={"state": "dict"}
+            parameters_schema={"state": "dict"},
         )
         self.bat_generator = BatchScriptGeneratorTool()
 
@@ -104,7 +109,8 @@ class DiskExportTool(StudioTool):
 
         # 1. Write source files
         for fname, content in code_files.items():
-            fpath = target_dir / fname
+            safe_rel = fname.strip().lstrip("\\/")
+            fpath = target_dir / safe_rel
             fpath.parent.mkdir(parents=True, exist_ok=True)
             fpath.write_text(content, encoding="utf-8", errors="replace")
 
@@ -172,7 +178,7 @@ class ZipPackagerTool(StudioTool):
             description="Uygulama kaynak kodlarını ve PRD dokümanını indirilebilir ZIP belleğine paketler.",
             department="Deployment_Gate",
             category="Packaging",
-            parameters_schema={"state": "dict"}
+            parameters_schema={"state": "dict"},
         )
 
     def run(self, state: Dict[str, Any]) -> bytes:

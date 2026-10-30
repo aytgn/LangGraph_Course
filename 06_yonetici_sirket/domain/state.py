@@ -2,7 +2,7 @@
 Domain State Definitions for LangGraph AI Software Studio.
 """
 
-from typing import Annotated, Sequence, List, Dict, Optional, Any
+from typing import Annotated, Sequence, List, Dict, Optional
 from typing_extensions import TypedDict
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
@@ -27,7 +27,7 @@ class CompanyState(TypedDict):
     tech_stack: Optional[List[str]]
     database_choice: Optional[str]
     entrypoint_file: Optional[str]
-    planned_files: Optional[List[Dict[str, str]]]
+    planned_files: Optional[List]
     architecture_spec: Optional[str]
 
     # Codebase & engineering artifacts (Lead_Developer)
@@ -41,9 +41,11 @@ class CompanyState(TypedDict):
     qa_issues: Optional[List[str]]
     revision_count: Optional[int]
 
-    # Founder feedback & HITL approval (Deployment_Gate / Founder)
+    # Founder feedback, rejection & HITL approval (Deployment_Gate / Founder)
     founder_feedback: Optional[str]
     feedback_target: Optional[str]
+    is_rejected: Optional[bool]
+    rejection_reason: Optional[str]
 
     # Deployment output
     is_deployed: Optional[bool]

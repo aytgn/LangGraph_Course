@@ -18,7 +18,7 @@
 - **KISIM IV: BİLGİ SİSTEMLERİ, EKİP MİMARİLERİ VE OTONOM ŞİRKET**
   - **Bölüm 6:** Kopyala-Yapıştırın Sonu — Modern RAG, Agentic RAG, MCP ve Dinamik Beceriler (Skills)
   - **Bölüm 7:** Tek Beyinden Orkestraya — 6 Çoklu Ajan Deseni, Subgraph'lar ve `Send` API
-  - **Bölüm 8:** Vaka Analizi — Kurduğumuz "Otonom Ajan Şirketi"nin Adım Adım Röntgeni
+  - **Bölüm 8:** Vaka Analizi — Otonom Yazılım Evi & Uygulama Stüdyosu (06_yonetici_sirket) Röntgeni
 - **KISIM V: GÖZLEMLENEBİLİRLİK, ÜRETİM MÜHENDİSLİĞİ VE TÜM EKOSİSTEM**
   - **Bölüm 9:** Kör Uçuşun Sonu — LangSmith, Run Tree, Maliyet/Gecikme ve Kalite Sınavları (Evals)
   - **Bölüm 10:** Saha Dersleri — Kotalar, Anahtar Rotasyonu, 20x Hızlandırma ve Kurumsal Güvenlik
@@ -37,12 +37,13 @@ Bu kitap klasik bir programlama kitabı değildir. Sayfalar dolusu sıkıcı kod
 > [!IMPORTANT]
 > **Bu Kitabın Altın Kuralı:** Bir yapay zeka mimarının görevi satır satır tuğla örmek değil, binanın statiğini, elektrik tesisatını, güvenlik kapılarını ve odalar arası geçişini tasarlamaktır. Bu kitabı bitirdiğinizde tek bir satır kodu ezberlemiş olmayacaksınız; ama **LangGraph ve etrafındaki tüm araç ekosisteminin nasıl çalıştığını bir başmimar berraklığında bileceksiniz.**
 
-Yolculuğumuz boyunca kendi elimizle kurduğumuz şu beş istasyonu sürekli canlı laboratuvarımız olarak kullanacağız:
+Yolculuğumuz boyunca kendi elimizle kurduğumuz şu istasyonları sürekli canlı laboratuvarımız olarak kullanacağız:
 1. **Temel Eğitim ([01_merhaba_langgraph.py](file:///c:/Users/aytgn/Desktop/LangGraph_Course/01_temel_egitim/01_merhaba_langgraph.py) & [02_tool_react_ajani.py](file:///c:/Users/aytgn/Desktop/LangGraph_Course/01_temel_egitim/02_tool_react_ajani.py)):** İlk durum grafımız, Eğitmen-Eleştirmen ikilisi ve çok adımlı finansal ReAct ajanımız.
 2. **İleri Runtime ([01_hafizali_ajan.py](file:///c:/Users/aytgn/Desktop/LangGraph_Course/02_derinlesme_runtime/01_hafizali_ajan.py)):** SQLite çelik kasası, CEO Ahmet ile Muhasebeci Mehmet'in izole hafızaları ve 150.000 TL'lik havalede devreye giren insan onayı freni.
 3. **Ekip Mimarisi ([01_supervisor_ekibi.py](file:///c:/Users/aytgn/Desktop/LangGraph_Course/03_ekip_mimarisi/01_supervisor_ekibi.py)):** Proje yöneticisi (Supervisor) liderliğinde çalışan Araştırmacı ve Geliştirici uzman ekibi.
 4. **Gözlemlenebilirlik ([01_langsmith_izleme.py](file:///c:/Users/aytgn/Desktop/LangGraph_Course/04_gozlemlenebilirlik/01_langsmith_izleme.py) & [langsmith_atolyesi.ipynb](file:///c:/Users/aytgn/Desktop/LangGraph_Course/04_gozlemlenebilirlik/langsmith_atolyesi.ipynb)):** Canlı telemetri, gecikme/maliyet hesabı, LangSmith ağaçları ve kişisel deney günlüğü atölyemiz.
-5. **Büyük Final ve Yönetici Kokpiti ([sirket_motoru.py](file:///c:/Users/aytgn/Desktop/LangGraph_Course/05_otonom_ajan_sirketi/sirket_motoru.py), [yonetici_masasi.py](file:///c:/Users/aytgn/Desktop/LangGraph_Course/yonetici_masasi.py) & [model_factory.py](file:///c:/Users/aytgn/Desktop/LangGraph_Course/model_factory.py)):** Dinamik API anahtarı rotasyonuyla kesintisiz çalışan, 3 departmanlı **Otonom Ajan Şirketi** ve Yönetim Kurulu Başkanının tek tıkla bütçe onaylayıp rapor indirdiği görsel **Yönetici Kokpiti**.
+5. **Otonom Şirket Temeli ([05_otonom_ajan_sirketi/](file:///c:/Users/aytgn/Desktop/LangGraph_Course/05_otonom_ajan_sirketi/sirket_motoru.py)):** Hibrit CEO orkestrasyonu, pazar araştırması ve bütçe onay bariyeri prototipimiz.
+6. **Büyük Final — Otonom Yazılım Evi & Uygulama Stüdyosu ([06_yonetici_sirket/](file:///c:/Users/aytgn/Desktop/LangGraph_Course/06_yonetici_sirket/yonetici_masasi.py)):** Büyük teknoloji şirketlerinin Clean Architecture standartlarında; CPO + CTO ürün keşif konseyi, döngüsel LangGraph yazılım fabrikası, deterministik Python AST denetimi, 3 yönlü Kurucu Karar Kapısı (Onayla, Revize Et, Reddet), gerçek SQLite CRUD portföyü ve port çakışmasız tek tıkla fiziksel çalıştırma paketi.
 
 Kemerlerinizi bağlayın. Önce zihnimizdeki "sohbet botu" algısını yıkıp yerine gerçek "otonom sistem" mimarisini kurarak başlıyoruz.
 
@@ -704,48 +705,166 @@ Maliyet ve hız optimizasyonunun zirvesidir:
 
 ---
 
-## Bölüm 8: Vaka Analizi — Kurduğumuz "Otonom Ajan Şirketi"nin Adım Adım Röntgeni
+## Bölüm 8: Vaka Analizi — Otonom Yazılım Evi & Uygulama Stüdyosu (`06_yonetici_sirket`) Röntgeni
 
-Şimdi tüm bu parçaların büyük final projemiz olan [sirket_motoru.py](file:///c:/Users/aytgn/Desktop/LangGraph_Course/05_otonom_ajan_sirketi/sirket_motoru.py) içinde nasıl tek bir saat mekanizması gibi birleştiğine kuşbakışı bakalım.
+Şimdi tüm bu parçaların büyük final projemiz olan **[06_yonetici_sirket](file:///c:/Users/aytgn/Desktop/LangGraph_Course/06_yonetici_sirket/yonetici_masasi.py)** içinde büyük yazılım firmalarının (**Clean Architecture**, **SOLID**, **Repository Pattern**) kurumsal standartlarında nasıl birleştiğine kuşbakışı bakalım.
 
-Bu dosyada aslında gerçek bir teknoloji şirketinin minyatür bir ikizini inşa ettik:
+---
 
-1. **Akıllı Şirket Panosu (`CompanyState`):**
-   Panomuzda sadece sohbet geçmişi (`messages`) tutmadık! Yanına kurumsal durum bayrakları ekledik:
-   - `research_summary` (Pazar raporu hazır mı?)
-   - `code_deliverable` (Üretim kodu yazıldı mı?)
-   - `allocated_budget` (Tahsis edilen bütçe ne kadar?)
-   - `is_audit_passed` (Finans ve insan denetiminden geçti mi?)
-   *Neden?* Çünkü CEO karar verirken 50 mesajlık sohbeti okuyup *"Acaba kod yazılmış mıydı?"* diye tahmin yürütmek zorunda kalmaz; doğrudan durum panosundaki yeşil/kırmızı ışıklara bakar!
+### 8.1 Felsefe Dönüşümü: Rapor Şirketinden Çalışan Yazılım İmal Eden Stüdyoya
 
-2. **Hibrit CEO Orkestrasyonu (`ceo_supervisor_node`):**
-   Yönetim Kurulu *"Bulut Tabanlı Otonom Müşteri Destek Sistemi projesini başlatın"* direktifini verdiğinde ilk CEO uyanır. Panoya bakar: Araştırma eksik! `CEORouteDecision` şemasıyla gerekçesini yazarak görevi `Research_Dept` departmanına havale eder.
+Eğitimimizin 5. modülünde (`05_otonom_ajan_sirketi`), pazar araştırması yapan ve sanal bütçe onaylayan bir danışmanlık şirketi kurmuştuk. Ancak gerçek dünyada bir kurucu başkan yapay zekadan soyut PDF raporları değil; **elle tutulur, derhal çalışan ve müşteriye sunulabilen yazılım ürünleri** ister:
+- Veritabanı ve grafik paneli olan bir **Streamlit Web Uygulaması** (Örn: Abonelik ve Finans Takipçisi),
+- Swagger arayüzü ve SQLite CRUD uç noktaları olan bir **FastAPI REST Mikroservisi** (Örn: Depo Stok Yönetimi),
+- Sunucu loglarını tarayan modüler bir **Python CLI Aracı** (Örn: LogAnaliz).
 
-3. **Uzman Departmanların Teslimatı:**
-   - **Araştırma Departmanı** pazar istihbarat aracını çalıştırır, %85 büyüme ve regülasyon gereksinimlerini raporlayıp `research_summary` ışığını yeşile çevirir ve sözü tekrar CEO'ya bırakır.
-   - **CEO** ikinci kez uyanır: Araştırma tamam, sıra Mühendislikte!
-   - **Mühendislik Departmanı** pazar raporunu okur, kurumsal servis sınıfını üretir, `code_deliverable` ışığını yeşile çevirir ve CEO'ya döner.
+İşte `06_yonetici_sirket`, yapay zekayı bir sohbet botundan çıkarıp **otonom bir yazılım fabrikasına ve girişim atölyesine (Venture Builder)** dönüştürdüğümüz nihai duraktır.
 
-4. **Büyük Güvenlik Freni (`interrupt_before=["Audit_Approval_Dept"]`):**
-   CEO üçüncü kez uyanır: Kod da hazır, artık sıra 250.000 TL bütçe tahsis edecek Finans/Denetim departmanında! Ancak şirket anayasamız (`compile`) der ki: **İnsan Yönetim Kurulu Başkanı onaylamadan tek kuruş bütçe bloke edilemez!**
-   Graf kapıda donar ve tüm durumu `enterprise.db` çelik kasasına kilitler.
+---
 
-5. **İnsan Onayı ve Kapanış:**
-   Yönetim Kurulu Başkanı (Siz) tamamlanan kodu ve talep edilen 250.000 TL bütçeyi ekranda görür, onay mührünü basar (`app.invoke(None, config)`). Finans departmanı bütçeyi tahsis eder (`BGT-8842`), CEO son kez uyanıp üç yeşil ışığı da görür ve `FINISH` kararıyla resmi kapanış bildirisini yayınlar!
+### 8.2 Kurumsal Clean Architecture ve 6 Katmanlı Sistem Mimarisi
 
-### 8.1 Terminalden Kurumsal Kokpite: `yonetici_masasi.py` (Executive Management Desk)
+Büyük teknoloji şirketlerinde kodlar tek bir 2.000 satırlık spagetti dosyada yaşamaz. Değişikliklerin sistemi çökertmemesi, birim testlerin izole çalışabilmesi ve yeni departmanların kolayca eklenebilmesi için sistem **6 bağımsız Clean Architecture katmanına** ayrılmıştır:
 
-Gerçek bir şirket sahibi terminale siyah-beyaz komutlar yazarak şirket yönetmez; karşısında temiz bir **Yönetim Kurulu Masası** ister. Kök dizindeki [yonetici_masasi.py](file:///c:/Users/aytgn/Desktop/LangGraph_Course/yonetici_masasi.py) ([yonetici_masasi_baslat.bat](file:///c:/Users/aytgn/Desktop/LangGraph_Course/yonetici_masasi_baslat.bat) ile tek tıkla açılan Streamlit kokpitimiz), arka plandaki tüm LangGraph kavramlarının gerçek bir üründe nasıl somutlaştığını gösteren kusursuz bir vitrindir:
+```
+06_yonetici_sirket/
+├── config/             # 1. Konfigürasyon: settings.py (Kök .env, timeout, MAX_QA_SELF_HEAL_RETRIES=2)
+├── data/               # 2. Veri Kalıcılığı: database.py, models.py, repositories/ (app_repository, vault_repository)
+├── tools/              # 3. Dinamik Araçlar: base.py, registry.py (ToolRegistry - 9 aktif mühendislik aracı)
+├── domain/             # 4. Alan Mantığı: state.py, schemas.py, workflow.py, utils.py, nodes/ (6 Departman Düğümü)
+├── services/           # 5. Orkestrasyon: studio_service.py (Fabrika akışı), discovery_service.py (Konsey)
+└── ui/                 # 6. Sunum Katmanı: styles.py, state.py, components/ (sidebar, matrix, explorer), views/ (tab 0..4)
+```
 
-- **1. Sekme (CEO İletişim ve Canlı HITL Onay Kartı):** Arka planda graf `interrupt_before=["Audit_Approval_Dept"]` kuralıyla durakladığı an, kokpitte kırmızı çerçeveli **"🛑 YÖNETİCİ ONAYI BEKLENİYOR"** kartı belirir. Sizin `[✅ 250.000 TL Şirket Bütçesini ONAYLA]` butonuna tıklamanız, perde arkasında `sirket_motoru.app.invoke(None, config=config)` komutunu tetikleyerek uykudaki grafı uyandırır!
-- **2. Sekme (Elle Tutulur Teslimatlar / Tangible Deliverables):** `CompanyState` içinde ayrı çekmecelerde tuttuğumuz `research_summary`, `allocated_budget` ve `code_deliverable` alanları burada indirilebilir resmi dokümanlara (`.md` pazar raporu, `.txt` bütçe tahsis sertifikası ve `.py` üretim mikroservisi) dönüşür.
-- **3. Sekme (Kodsuz SQLite ve Time-Travel Denetçisi):** `enterprise.db` içindeki tüm geçmiş projeleri (`thread_id`), her projenin kaç checkpoint adımından oluştuğunu ve `get_state_history()` ile çekilen adım adım zaman çizelgesini tek bir SQL sorgusu bile yazmadan canlı tabloda önünüze serer!
-- **4. Sekme (Departman Matrisi & Şirket Radarı):** Aktif model, `.env` içindeki anahtar havuzu kapasitesi ve 4 departmanın yetki sınırlarını tek ekranda özetler.
+1. **`config/`:** Kök `.env` dosyasını otomatik yükler, `output_uygulamalar/` ve `meta_bellek/` dizinlerini garantiye alır.
+2. **`data/`:** `studio_projects` ve `checkpoints` tablolarını yönetir. Projelerin oluşturulması, aranması, güncellenmesi ve silinmesi (CRUD) Repository desenine emanettir.
+3. **`tools/`:** Araçlar düğümlerin içine gömülmez; merkezi `ToolRegistry` üzerinde tescil edilir (AST denetimi, paketleme, kasa).
+4. **`domain/`:** LangGraph'ın kalbidir. `CompanyState`, Pydantic çıktı modelleri ve tek sorumluluk ilkeli departman düğümleri burada yaşar.
+5. **`services/`:** Arayüz ile LangGraph arasındaki köprüdür. Canlı streaming, fabrika sohbeti, onay, revizyon ve red mantığını yürütür.
+6. **`ui/`:** Sıfır iş mantığı barındıran modüler Streamlit sunum katmanıdır.
 
+---
+
+### 8.3 Akıllı Durum Panosu (`CompanyState`)
+
+Neden ajan sistemlerinde tek başına sohbet geçmişi (`messages`) yetersiz kalır? Çünkü 15 dosyalık bir projenin ortasında direktör, 80 mesajlık geçmişi okuyup *"Acaba mimar hangi kütüphaneleri seçmişti?"* diye tahmin yürütmeye kalkarsa halüsinasyon riski katlanır ve token maliyetleri uçar!
+
+Bu yüzden `CompanyState` sözleşmemiz, gerçek bir fabrika panosu gibi durum bayrakları taşır:
+- **`app_name` & `app_type`:** Uygulamanın adı ve mimari türü (Streamlit / FastAPI / CLI).
+- **`prd_spec` & `core_features`:** CPO'nun hazırladığı kullanıcı akışı ve MVP fonksiyon listesi.
+- **`architecture_spec` & `tech_stack`:** CTO'nun tasarladığı modüler şema ve Python kütüphaneleri sözleşmesi.
+- **`code_files` & `total_loc`:** Üretilen çoklu Python dosyaları sözlüğü (`{dosya_adi: kod}`) ve gerçek satır sayısı.
+- **`qa_passed` & `qa_issues`:** Deterministik AST ve çapraz import testinin sonuçları.
+- **`revision_count` & `cycle_count`:** Döngü sayacı ve QA öz-iyileştirme tur sayısı.
+- **`founder_feedback` & `feedback_target`:** Kurucu Başkanın verdiği revizyon talimatı ve hedef departman.
+- **`is_rejected` & `rejection_reason`:** Kod reddi durumu ve gerekçesi.
+- **`is_deployed` & `app_folder`:** Fiziksel kurulum bayrağı ve disk klasörü yolu.
+
+---
+
+### 8.4 Döngüsel LangGraph Akışı & 6 Uzman Departman
+
+Sistemimiz düz bir boru hattı (DAG) değil; merkezi **`Studio_Director`** hakemliğinde çalışan canlı bir döngüsel grafiktir:
+
+```mermaid
+flowchart TD
+    Start([🚀 Kurucu Direktifi / Şartname]) --> Director{👑 Studio_Director}
+
+    Director -->|PRD Eksik| CPO[💡 Product_Lead / CPO]
+    CPO -->|PRD Hazır| Director
+
+    Director -->|Mimari Eksik| CTO[📐 System_Architect / CTO]
+    CTO -->|Modül Şeması Hazır| Director
+
+    Director -->|Kod Üretimi| Dev[💻 Lead_Developer]
+    Dev -->|Çok Dosyalı Kod Yazıldı| Director
+
+    Director -->|Denetim Vakti| QA[🛡️ QA_Security_Lead]
+    QA -->|Hata Var & Tur <= 2| Dev
+    QA -->|AST Başarılı| Director
+
+    Director -->|Her Şey Hazır| Gate[🛑 Deployment_Gate / HITL]
+    
+    Gate -->|✅ Kurucu Onayladı| Deploy[📦 Fiziksel Paketleme & baslat.bat]
+    Deploy --> EndNode([🏁 FINISH / Canlı Uygulama])
+
+    Gate -->|🔄 Kurucu Revizyon İstedi| Director
+    Gate -->|❌ Kurucu Reddetti| RejectNode([❌ Kod Reddedildi / İptal])
+```
+
+1. **👑 Studio_Director (Stüdyo Direktörü):** Grafın merkezindedir. `director_router` fonksiyonuyla durumu inceler; eksik belgeye, QA hatasına veya kurucu revizyonuna göre bir sonraki adımı belirler.
+2. **💡 Product_Lead (CPO):** Ne uygulaması yapılacağını, hedef kitleyi ve MVP özelliklerini içeren kapsamlı PRD dokümanını hazırlar.
+3. **📐 System_Architect (CTO):** Uygulamaya en uygun teknoloji yığınını (Streamlit, FastAPI, SQLite, CLI) ve modül sözleşmelerini tasarlar.
+4. **💻 Lead_Developer (Kıdemli Mühendis):** PRD ve mimariye sadık kalarak eksiksiz, çok dosyalı temiz Python kaynak kodlarını üretir.
+5. **🛡️ QA_Security_Lead (QA Lideri):** Deterministik Python AST sözdizimi ve modüller arası çapraz import denetimi yapar.
+6. **🚀 Deployment_Gate (Kurucu Kapısı):** Kurucu Başkan onayı gelmeden diske tek bir dosya yazmaz; onaylanınca `baslat.bat` ile paketi inşa eder.
+
+---
+
+### 8.5 Deterministik Kalite & Güvenlik: AST Denetimi ve `MAX_QA_SELF_HEAL_RETRIES = 2`
+
+Yapay zeka kod yazarken sözdizimi hatası yapabilir veya bir modülde tanımlamadığı bir fonksiyonu diğer modülden `from db import kaydet` diye import etmeye kalkabilir. Bu hataları olasılıksal bir LLM'e sormak yerine **deterministik Python AST (`ast.parse`) ve sözleşme denetçisi (`CrossModuleImportValidatorTool`)** ile sıfır hata toleransıyla test ederiz.
+
+**Sonsuz Öz-İyileştirme Döngüsü Tuzağı:**
+Eğer mühendis hata yapar ve QA bunu raporlarsa, mühendis düzeltmeye çalışır. Ancak mühendis aynı hatayı tekrarlarsa sistem sonsuz bir döngüye girip API kredilerini tüketebilir! İşte bu yüzden mimarimize **`MAX_QA_SELF_HEAL_RETRIES = 2`** emniyet kemeri ekledik: Mühendis 2 turda hatayı çözemezse direktör döngüyü keser ve durumu Kurucu Karar Kapısına eskalasyon yapar.
+
+---
+
+### 8.6 Kurucu Karar Kapısı (HITL Gate): Onayla, Revize Et, Kodu Reddet
+
+LangGraph'ın `interrupt_before=["Deployment_Gate"]` mekanizması sayesinde kod diske yazılmadan önce graf durur. Yönetici Masası'nda kurucuya **3 net karar yolu** sunulur:
+1. **✅ Kodu Onayla ve Diske İnşa Et:** Kodları, `requirements.txt`'yi, şartnameyi ve port çakışmasız `baslat.bat` dosyasını `output_uygulamalar/` dizinine fiziksel olarak kurar.
+2. **🔄 Departmana Revizyon Gönder:** Kurucu *"Kategoriye göre filtreleme ekle"* gibi bir talimat girdiğinde, `as_node="Deployment_Gate"` güncellemesiyle graf doğrudan ilgili departmana (Mühendis, CTO veya CPO) geri yönlendirilir.
+3. **❌ Kodu Reddet:**
+   - **`♻️ Kodu Reddet & Sıfırdan Yazdır`:** Mevcut kodları tamamen silip mühendise sıfırdan temiz kod yazdırır.
+   - **`🛑 Kodu Reddet & İnşayı İptal Et`:** Dağıtımı derhal iptal eder, uykudaki grafı uyandırıp sonlandırır ve projeyi SQLite'a kalıcı olarak **`❌ Kod Reddedildi`** statüsüyle işler.
+
+---
+
+### 8.7 Yazılım Fabrikası İletişim Masası & Çift Modlu Konsol
+
+Yönetici Masası'nın en kritik yeniliklerinden biri, **kod bozulmadan fabrika ekibiyle konuşabilme yeteneğidir**. Sekme 1'de her zaman açık kalan sohbet konsolu iki modda çalışır:
+- **`💬 Fabrika Ekibiyle Görüş (Soru Sor & Teknik İstişare)`:** Mevcut kodlar veya PRD değişmez. Baş Mimar (`chat_with_factory_team`) projenin durumunu, mimarisini ve kodlarını inceleyerek kurucunun sorularını yanıtlar.
+- **`⚡ Otonom İmalat / Geliştirme Döngüsü Çalıştır`:** Kurucunun yeni talimatıyla fabrikayı uyandırır ve tam döngüsel kodlama sürecini çalıştırır.
+
+---
+
+### 8.8 İkinci Beyin (Second Brain) & Ürün-Mimari Keşif Odası
+
+Şirketin kurumsal tecrübesi `meta_bellek/` kasasında yaşar:
+- `01_sirket_vizyonu.md`: Şirket manifestosu ve temel ilkeler.
+- `02_beyin_firtinasi_notlari/`: Keşif ve ürün fikirleri.
+- `03_stratejik_kararlar/`: Mimari Karar Kayıtları (ADR).
+- `04_operasyonel_direktifler/`: Fabrikaya aktarılan mühendislik şartnameleri.
+
+Sekme 0'daki **Ürün & Mimari Konseyi**, Kurucu Başkanın aklındaki ham fikri alır; CPO kullanıcı akışını, CTO ise teknoloji yığınını belirler. Ardından tek bir butona tıklayarak (**`🚀 Fabrikaya Şartname Olarak Aktar`**) bu tartışmayı yeni bir SQLite projesine ve doğrulanmış mühendislik şartnamesine dönüştürür.
+
+---
+
+### 8.9 Gerçek SQLite CRUD Portföy Yönetimi
+
+Tüm projeler yerel `studio_apps.db` veritabanında thread izolasyonuyla tutulur:
+- **`studio_projects` Tablosu:** Her projenin `thread_id`, görünür adı, yönetici notları, etiketleri ve güncelleme tarihini saklar.
+- **CREATE:** Yeni proje oluşturulduğu an veritabanına işlenir; sayfa yenilendiğinde seçim kaybolmaz.
+- **READ:** Portföy sekmesinde duruma göre filtreleme (Onay Bekliyor, Reddedildi, Kurulu vb.) ve anlık metin araması yapılır.
+- **UPDATE:** Proje adı, etiket ve notları doğrudan SQLite `UPDATE` sorgusuyla güncellenir.
+- **DELETE:** İstenmeyen projeler checkpoints, writes ve disk çıktılarıyla birlikte kalıcı olarak silinir.
+- **Time-Travel Audit:** `app.get_state_history()` ile projenin geçmiş tüm checkpoint adımları tablo halinde denetlenebilir.
+
+---
+
+### 8.10 Fiziksel Dağıtım ve 1-Tık Çalıştırma Paketi
+
+Kurucu kodu onayladığında `BatchScriptGeneratorTool` devreye girer:
+- **Port Güvenliği:** Yönetici Masası `8501` portunda çalışır. Çakışmayı önlemek için üretilen Streamlit web uygulamaları otomatik olarak **`8505`** portuna, FastAPI servisleri ise **`8005`** portuna yönlendirilir.
+- **Windows `start ""` Çözümü:** Windows komut satırının tırnak işaretli dosya yollarını pencere başlığı sanma hatası, `cmd.exe /c start "" "baslat.bat"` sözdizimiyle çözülmüştür.
+- **Tarayıcı İçi Kod Düzenleyici:** Kod Gezgini sekmesinde herhangi bir Python dosyası elle düzenlendiğinde, sistem otomatik olarak AST sözdizimi testini çalıştırır ve kurulu uygulamaya diske anında eşitler.
 
 ---
 
 # KISIM V: GÖZLEMLENEBİLİRLİK, ÜRETİM MÜHENDİSLİĞİ VE TÜM EKOSİSTEM
+
+
 
 ## Bölüm 9: Kör Uçuşun Sonu — LangSmith, Run Tree, Maliyet/Gecikme ve Kalite Sınavları
 

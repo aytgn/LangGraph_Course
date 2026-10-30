@@ -71,6 +71,8 @@ class CrossModuleImportValidatorTool(StudioTool):
                         for tgt in node.targets:
                             if isinstance(tgt, ast.Name):
                                 symbols.add(tgt.id)
+                    elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                        symbols.add(node.target.id)
                 module_symbols[mod_name] = symbols
             except Exception:
                 continue

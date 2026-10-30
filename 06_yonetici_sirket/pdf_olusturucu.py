@@ -1,21 +1,23 @@
 """
 ================================================================================
-📄 OTONOM AJAN ŞİRKETİ - KURUMSAL PDF RAPOR ÜRETİCİSİ (EXECUTIVE PDF ENGINE) 📄
+📄 OTONOM YAZILIM EVİ - KURUMSAL PDF TEKNİK WHITEPAPER ÜRETİCİSİ 📄
 ================================================================================
-Tüm sistem mimarisini, LangGraph akışlarını, SQLite şemasını, güvenlik katmanlarını
-ve kod örneklerini profesyonel, Türkçe karakter destekli bir PDF dosyasına dönüştürür.
+Clean Architecture, Döngüsel LangGraph Fabrikası, Deterministik AST/QA,
+Kurucu Karar Kapısı (HITL Onay/Revizyon/Red), SQLite CRUD ve Dinamik ToolRegistry
+bilgilerini içeren A4 boyutunda kurumsal Türkçe PDF rapor üretir.
 ================================================================================
 """
 
 import os
-from fpdf import FPDF
 from datetime import datetime
+from fpdf import FPDF
+
 
 class ExecutiveDocPDF(FPDF):
     def __init__(self):
         super().__init__(orientation="P", unit="mm", format="A4")
         self.set_auto_page_break(auto=True, margin=18)
-        
+
         # Windows sistem fontlarını UTF-8 destekli kaydet
         font_dir = "C:/Windows/Fonts"
         arial_reg = os.path.join(font_dir, "arial.ttf")
@@ -40,8 +42,8 @@ class ExecutiveDocPDF(FPDF):
     def header(self):
         if self.page_no() > 1:
             self.set_font("ArialCustom", "B", 8)
-            self.set_text_color(100, 116, 139) # slate-500
-            self.cell(100, 6, "OTONOM AJAN ŞİRKETİ | KURUMSAL TEKNİK WHITEPAPER", border=0, align="L")
+            self.set_text_color(100, 116, 139)  # slate-500
+            self.cell(100, 6, "OTONOM YAZILIM EVİ & UYGULAMA STÜDYOSU | KURUMSAL TEKNİK WHITEPAPER", border=0, align="L")
             self.set_font("ArialCustom", "", 8)
             self.cell(90, 6, datetime.now().strftime("%d.%m.%Y"), border=0, align="R", new_x="LMARGIN", new_y="NEXT")
             self.set_draw_color(226, 232, 240)
@@ -58,34 +60,32 @@ class ExecutiveDocPDF(FPDF):
 
     def add_section_title(self, title: str):
         self.ln(4)
-        self.set_font("ArialCustom", "B", 13)
-        self.set_text_color(15, 23, 42) # slate-900
-        self.set_fill_color(241, 245, 249) # slate-100
+        self.set_font("ArialCustom", "B", 12.5)
+        self.set_text_color(15, 23, 42)  # slate-900
+        self.set_fill_color(241, 245, 249)  # slate-100
         self.cell(0, 9, f"  {title}", border=0, align="L", fill=True, new_x="LMARGIN", new_y="NEXT")
-        self.set_draw_color(2, 132, 199) # sky-600
+        self.set_draw_color(2, 132, 199)  # sky-600
         self.line(10, self.get_y(), 10, self.get_y() - 9)
         self.ln(3)
 
     def add_subsection_title(self, title: str):
         self.ln(2)
         self.set_font("ArialCustom", "B", 10.5)
-        self.set_text_color(3, 105, 161) # sky-700
+        self.set_text_color(3, 105, 161)  # sky-700
         self.cell(0, 7, title, border=0, align="L", new_x="LMARGIN", new_y="NEXT")
         self.ln(1)
 
     def add_paragraph(self, text: str):
         self.set_font("ArialCustom", "", 9.5)
-        self.set_text_color(51, 65, 85) # slate-700
+        self.set_text_color(51, 65, 85)  # slate-700
         self.multi_cell(0, 5.5, text)
         self.ln(2)
 
     def add_code_block(self, code: str):
         self.set_font("ConsolasCustom", "", 8)
         self.set_text_color(30, 41, 59)
-        self.set_fill_color(248, 250, 252) # slate-50
-        self.set_draw_color(203, 213, 225) # slate-300
-        
-        # Kod bloğu kutusu
+        self.set_fill_color(248, 250, 252)  # slate-50
+        self.set_draw_color(203, 213, 225)  # slate-300
         lines = code.strip().split("\n")
         box_text = "\n".join(lines)
         self.multi_cell(0, 4.5, box_text, border=1, fill=True)
@@ -93,135 +93,143 @@ class ExecutiveDocPDF(FPDF):
 
 
 def generate_enterprise_documentation_pdf() -> bytes:
-    """Tüm sistem dökümantasyonunu içeren profesyonel bir PDF üretir ve bytes olarak döner."""
+    """Tüm sistem mimarisini içeren güncel kurumsal PDF üretir ve bytes olarak döner."""
     pdf = ExecutiveDocPDF()
     pdf.add_page()
 
     # KAPAK & BAŞLIK ALANI
-    pdf.set_fill_color(15, 23, 42) # Koyu lacivert kurumsal başlık kutusu
-    pdf.rect(10, 20, 190, 40, "F")
-    
+    pdf.set_fill_color(15, 23, 42)  # Koyu lacivert
+    pdf.rect(10, 20, 190, 42, "F")
+
     pdf.set_y(25)
-    pdf.set_font("ArialCustom", "B", 18)
+    pdf.set_font("ArialCustom", "B", 17)
     pdf.set_text_color(248, 250, 252)
     pdf.cell(0, 10, "OTONOM YAZILIM EVİ & UYGULAMA STÜDYOSU", align="C", new_x="LMARGIN", new_y="NEXT")
-    
+
     pdf.set_font("ArialCustom", "", 10)
     pdf.set_text_color(148, 163, 184)
-    pdf.cell(0, 7, "Döngüsel LangGraph Yazılım Fabrikası, AST/QA Denetimi ve Mimari Whitepaper", align="C", new_x="LMARGIN", new_y="NEXT")
-    
-    pdf.set_font("ArialCustom", "B", 8.5)
-    pdf.set_text_color(245, 158, 11) # Gold
-    pdf.cell(0, 6, "LangGraph Cyclical Studio * Gemini 5-Key Failover * SQLite App Registry * HITL", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 7, "Clean Architecture • Döngüsel LangGraph Fabrikası • Deterministik AST/QA • SQLite CRUD", align="C", new_x="LMARGIN", new_y="NEXT")
 
-    pdf.set_y(68)
-    
-    # 1. BÖLÜM: YÖNETİCİ HIZLI BAŞLANGIÇ ÖZETİ
+    pdf.set_font("ArialCustom", "B", 8.5)
+    pdf.set_text_color(245, 158, 11)  # Gold
+    pdf.cell(0, 6, "LangGraph v0.2+ * Gemini 5-Key Failover * ToolRegistry * HITL Onay/Revizyon/Red * studio_apps.db", align="C", new_x="LMARGIN", new_y="NEXT")
+
+    pdf.set_y(70)
+
+    # 1. BÖLÜM: YÖNETİCİ HIZLI BAŞLANGIÇ
     pdf.add_section_title("1. YÖNETİCİ HIZLI BAŞLANGIÇ ÖZETİ (SOFTWARE STUDIO CHEATSHEET)")
     pdf.add_paragraph(
-        "Bu sistem; teorik danışmanlık raporları yerine doğrudan çalışan yazılım uygulamaları (Streamlit Web, FastAPI REST API, "
-        "Python CLI) inşa eden tam otonom bir yapay zeka yazılım stüdyosudur. Kurucu Başkan, CPO ve CTO ajanlarla önce ne "
-        "uygulaması yapılacağını ve teknoloji yığınını tartışır; ardından döngüsel fabrika gerçek çok dosyalı kodu üretir."
+        "Bu sistem; soyut danışmanlık raporları yerine doğrudan çalıştırılabilir tam teşekküllü yazılım ürünleri "
+        "(Streamlit Web App, FastAPI REST Service, Python CLI & Automation) imal eden otonom bir yapay zeka yazılım stüdyosudur. "
+        "Büyük teknoloji şirketlerinin Clean Architecture, SOLID ve Repository Pattern standartlarına göre 6 bağımsız katmanda yapılandırılmıştır."
     )
-    pdf.add_subsection_title("3 Adımda Uygulama İnşası:")
+    pdf.add_subsection_title("Döngüsel İmalatın 4 Temel Aşaması:")
     pdf.add_paragraph(
-        "1. Ürün & Tech Stack Tartışması: Tartışma Odasında CPO ve CTO ile uygulama amacını ve teknolojileri netleştirin.\n"
-        "2. Döngüsel İmalat & AST/QA: PRD -> Sistem Mimarisi -> Çok Dosyalı Kodlama <-> Otomatik AST/QA düzeltme döngüsü çalışır.\n"
-        "3. Kurucu Onayı veya Revizyon (HITL): Kodu inceleyip onaylayarak baslat.bat ile diske inşa edin veya revizyon döngüsü başlatın."
+        "1. Ürün & Mimari Tartışması (Tab 0): CPO (Ürün Lideri) ve CTO (Baş Sistem Mimarı) ile uygulamanın amacı, "
+        "kullanıcı akışı, arayüz tipi ve veritabanı tercihi tartışılır; tek tıkla mühendislik şartnamesine dönüştürülür.\n"
+        "2. Döngüsel Yazılım Fabrikası (Tab 1): PRD -> Sistem Mimarisi -> Çok Dosyalı Kodlama <-> Deterministik AST/QA "
+        "öz-iyileştirme döngüsü otonom olarak çalışır.\n"
+        "3. Kurucu Karar Kapısı (HITL Gate): Üretilen kodlar önizlenir; Onayla & Diske Kur, Departmana Revizyon Gönder veya "
+        "Kodu Reddet (Sıfırdan Yazdır / İptal Et) kararı verilir.\n"
+        "4. Çalıştırma & Portföy CRUD (Tab 2 & 3): Port çakışması önlenmiş baslat.bat (Streamlit port 8505, FastAPI port 8005) "
+        "ile tek tıkla başlatılır; studio_apps.db üzerinde tam SQLite CRUD yönetimi sağlanır."
     )
 
-    # 2. BÖLÜM: UÇTAN UCA MİMARİ VE LANGGRAPH AKIŞI
-    pdf.add_section_title("2. DÖNGÜSEL YAZILIM FABRİKASI VE LANGGRAPH MİMARİSİ")
+    # 2. BÖLÜM: KURUMSAL CLEAN ARCHITECTURE
+    pdf.add_section_title("2. KURUMSAL CLEAN ARCHITECTURE VE 6 KATMANLI YAPI")
     pdf.add_paragraph(
-        "Stüdyo mimarisi doğrusal bir hat değil, merkezi Studio_Director etrafında dönen canlı bir döngüdür. "
-        "QA/AST hatası yakalandığında kod otomatik olarak Lead_Developer birimine geri döner; Kurucu geri bildirim verdiğinde "
-        "System_Architect veya Lead_Developer düğümüne yeniden yönlendirilir."
+        "Proje kodları monolitik tek bir dosyada değil; sorumlulukları kesin çizgilerle ayrılmış 6 kurumsal katmanda yaşar:\n"
+        "- config/ (Settings & Defaults): Kök .env yükleyici, dizin hazırlığı, öz-iyileştirme sınırları (MAX_QA_SELF_HEAL_RETRIES=2).\n"
+        "- data/ (Persistence & Models): studio_projects ve checkpoints SQLite tabloları, AppRepository ve VaultRepository CRUD katmanı.\n"
+        "- tools/ (Dynamic Tool Registry): StudioTool soyut sınıfı, ToolRegistry (9 kayıtlı araç: AST denetimi, paketleme, kasa).\n"
+        "- domain/ (Core Logic & Nodes): CompanyState, Pydantic çıktı şemaları, StudioWorkflowBuilder ve 6 uzman departman düğümü.\n"
+        "- services/ (Orchestration): StudioService (fabrika sohbeti, derleme, onay, revizyon, red) ve DiscoveryService (konsey köprüsü).\n"
+        "- ui/ (Presentation Layer): Streamlit modüler görünümleri (views/tab_*.py), bileşenler (components/), stiller ve session state."
     )
-    pdf.add_code_block("""[Kurucu Talebi] -> START -> [Studio_Director (Dongu Merkezi)]
-  |-- (PRD Eksikse)       -> [Product_Lead (CPO)]     -> [Studio_Director]
-  |-- (Mimari Eksikse)    -> [System_Architect (CTO)] -> [Studio_Director]
-  |-- (Kodlama / Duzeltme)-> [Lead_Developer]         -> [Studio_Director]
-  |-- (AST & QA Kontrolu) -> [QA_Security_Lead]       -> (Hata Varsa Lead_Developer'a Doner!)
-  `-- (QA Gectiyse)       -> [HITL Kurucu Kapisi]     -> [Deployment_Gate (baslat.bat)] -> FINISH""")
+    pdf.add_code_block("""06_yonetici_sirket/
+|-- config/     -> settings.py (Ortam degiskenleri, limitler ve dizinler)
+|-- data/       -> database.py, models.py, repositories/ (app_repository, vault_repository)
+|-- tools/      -> base.py, registry.py, code_verification.py, disk_operations.py, vault_operations.py
+|-- domain/     -> state.py, schemas.py, workflow.py, utils.py, nodes/ (6 Departman Dugumu)
+|-- services/   -> studio_service.py, discovery_service.py
+`-- ui/         -> styles.py, state.py, components/ (sidebar, matrix, explorer, runner), views/ (tab 0..4)""")
 
-    pdf.add_subsection_title("CompanyState Yazılım Durum Şeması:")
+    # 3. BÖLÜM: DÖNGÜSEL LANGGRAPH FABRİKASI
+    pdf.add_section_title("3. DÖNGÜSEL LANGGRAPH YAZILIM FABRİKASI VE ÇALIŞMA ŞEMASI")
     pdf.add_paragraph(
-        "- app_name, app_slug, app_type: Uygulamanın kimliği ve arayüz tipi (Streamlit / FastAPI / CLI).\n"
-        "- prd_spec & core_features: Ürün şartnamesi ve MVP fonksiyonel özellik listesi.\n"
-        "- tech_stack & architecture_spec: Seçilen kütüphaneler, veritabanı katmanı ve modül sözleşmesi.\n"
-        "- code_files & total_loc: Üretilen çoklu Python dosyaları haritası ve gerçek kod satır sayısı.\n"
-        "- qa_passed, qa_issues & revision_count: Deterministik Python AST ve AI kalite denetim döngüsü verileri.\n"
-        "- transition_log & cycle_count: Departmanlar arası tüm ileri/geri geçişlerin zaman damgalı izi."
+        "Geleneksel düz akışların aksine, sistem merkezi 'Studio_Director' etrafında dönen döngüsel (cyclic) bir durum makinesidir. "
+        "Ajanlar birbirini doğrudan çağırmaz; her düğüm işini bitirince durumu günceller ve denetim direktöre döner."
     )
+    pdf.add_code_block("""[Kurucu Direktifi] -> START -> [Studio_Director (Merkezi Orkestrator)]
+  |-- (PRD Eksikse)          -> [Product_Lead (CPO)]        -> [Studio_Director]
+  |-- (Mimari Eksikse)       -> [System_Architect (CTO)]    -> [Studio_Director]
+  |-- (Kodlama / Revizyon)   -> [Lead_Developer]            -> [Studio_Director]
+  |-- (AST & QA Denetimi)    -> [QA_Security_Lead]          -> (Hata Varsa Lead_Developer'a Doner!)
+  |-- (QA Gecti & Onay Vakti)-> [Deployment_Gate (HITL)]    -> (Kurucu Onay / Revizyon / Red Bekler!)
+  `-- (Kurucu Onayladiysa)   -> Diske Paketle + baslat.bat   -> FINISH""")
 
-    # 3. BÖLÜM: ÇEKİRDEK KOD MİMARİSİ
-    pdf.add_section_title("3. ÇEKİRDEK KOD MİMARİSİ VE MODÜLLER")
+    pdf.add_subsection_title("CompanyState Durum Şeması:")
     pdf.add_paragraph(
-        "Proje 3 temel katmandan oluşur: Dayanıklı LLM fabrikası (model_factory.py), kurumsal graf motoru (sirket_motoru.py) "
-        "ve yönetici kontrol kokpiti (yonetici_masasi.py)."
-    )
-    pdf.add_subsection_title("A) KeyRotatingGeminiLLM (.env Tabanlı 5'li Key Havuzu):")
-    pdf.add_paragraph(
-        "Google AI Studio'nun serbest katman kotalarına (429) ve sunucu yoğunluklarına (503/504) karşı, "
-        ".env içerisindeki 5 API anahtarı arasında milisaniyeler içinde rotasyon yapar. "
-        "İleride .env dosyasına yeni anahtarlar eklense dahi Python koduna tek satır dokunulması gerekmez."
-    )
-    pdf.add_code_block("""class KeyRotatingGeminiLLM(Runnable):
-    def invoke(self, input: Any, config: Optional[dict] = None, **kwargs) -> Any:
-        total_keys = len(self.api_keys)
-        for attempt in range(total_keys):
-            idx = (self.active_index + attempt) % total_keys
-            try:
-                return self._create_model_for_key(self.api_keys[idx]).invoke(input, ...)
-            except Exception as e:
-                # Kota veya sunucu hatasında bir sonraki anahtara geç!
-                next_idx = (idx + 1) % total_keys
-                continue
-        raise last_exception""")
-
-    # 4. BÖLÜM: GÜVENLİK VE HUMAN-IN-THE-LOOP
-    pdf.add_section_title("4. GÜVENLİK VE HUMAN-IN-THE-LOOP (HITL) KAPISI")
-    pdf.add_paragraph(
-        "Otonom yapay zeka sistemlerinde en büyük operasyonel risk, ajanların denetimsiz bütçe harcaması veya dış dünyaya kaynak tahsisi yapmasıdır. "
-        "LangGraph'ın 'interrupt_before' özelliği ile 250.000 TL bütçe tahsisi öncesinde graf dondurulur."
-    )
-    pdf.add_code_block("""# Audit_Approval_Dept (Bütçe Tahsisi) öncesinde İNSAN ONAYI için duraklatılır!
-app = workflow.compile(
-    checkpointer=memory,
-    interrupt_before=["Audit_Approval_Dept"]
-)""")
-    pdf.add_paragraph(
-        "Yönetici arayüzdeki '250.000 TL Bütçeyi Onayla' butonuna bastığında 'app.invoke(None, config=config)' çağrılarak "
-        "oturum SQLite veritabanındaki dondurulmuş durumdan uyandırılır ve başarıyla sonlandırılır."
+        "- app_name, app_slug, app_type: Uygulama adı, slug ve mimari türü (Streamlit / FastAPI / CLI).\n"
+        "- prd_spec, core_features: MVP ürün şartnamesi ve hedeflenen özellik maddeleri.\n"
+        "- architecture_spec, tech_stack, entrypoint_file: Sistem mimarisi, kütüphane listesi ve ana giriş dosyası.\n"
+        "- code_files & total_loc: {dosya_adi: kod} sözlüğü ve toplam satır sayısı.\n"
+        "- qa_passed, qa_issues, revision_count: AST ve çapraz import test sonuçları, döngü öz-iyileştirme sayacı.\n"
+        "- is_rejected, rejection_reason: Kurucu kod reddi durum bayrakları ve gerekçesi.\n"
+        "- is_deployed, app_folder, run_command_hint: Fiziksel kurulum dizini ve çalıştırma komutu.\n"
+        "- messages & transition_log: Konuşma geçmişi ve zaman damgalı departman geçiş telemetrisi."
     )
 
-    # 5. BÖLÜM: SQLITE VERİTABANI VE KALICILIK
-    pdf.add_section_title("5. SQLITE VERİTABANI ŞEMASI VE KALICILIK MODELİ")
+    # 4. BÖLÜM: GÜVENLİK VE HITL KARAR KAPISI
+    pdf.add_section_title("4. KURUCU KARAR KAPISI (HITL GATE) VE GÜVENLİK KONTROLLERİ")
     pdf.add_paragraph(
-        "Tüm şirket operasyonları yerel 'enterprise.db' veritabanına SqliteSaver aracılığıyla işlenir. "
-        "Sunucu çökse veya elektrik kesilse dahi sistem hangi adımda kaldığını unutmaz."
+        "Sistemde kontrol tamamen insandadır. LangGraph'ın 'interrupt_before=[\"Deployment_Gate\"]' mekanizmasıyla kod diske "
+        "yazılmadan önce graf duraklatılır ve Kurucuya 3 net seçenek sunulur:\n"
+        "1. [ONAYLA] Kodu Onayla ve Diske İnşa Et: Fiziksel output_uygulamalar/ dizinine kaynak kodlar, requirements.txt, "
+        "MIMARI_VE_PRD.md ve baslat.bat dosyalarını inşa eder.\n"
+        "2. [REVİZYON] Departmana Revizyon Gönder: İstenen düzeltme talimatıyla fabrikayı hedef departmana (Mühendis, CTO veya CPO) geri yönlendirir.\n"
+        "3. [REDDET] Kodu Reddet: 'Sıfırdan Yeniden Yazdır' (kodu silip baştan başlatır) veya 'İnşayı İptal Et' (fiziksel kurulumu iptal edip "
+        "SQLite'a 'Kod Reddedildi' statüsünü işler)."
     )
+    pdf.add_subsection_title("Sonsuz Döngü ve Çökme Korumaları:")
     pdf.add_paragraph(
-        "- checkpoints Tablosu: thread_id, checkpoint_id, parent_checkpoint_id, checkpoint (durum verisi), metadata.\n"
-        "- writes Tablosu: Düğümlerin birbirine aktardığı mesajlar ve durum güncellemeleri.\n"
-        "- Thread İzolasyonu: Her proje (Örn: 'holding-proje-alpha-2026') bağımsız bir oturumda saklanır; diğer projeleri etkilemez.\n"
-        "- Time-Travel: 'app.get_state_history(config)' metodu ile geçmiş projelerin her bir anına geri dönülebilir."
+        "- MAX_QA_SELF_HEAL_RETRIES = 2: QA hatalarında mühendis en fazla 2 kez otomatik düzeltme döngüsüne girebilir; aşılırsa "
+        "sistem sonsuz döngüye girmeden Kurucu Karar Kapısına eskalasyon yapar.\n"
+        "- RobustConsole & UTF-8 Koruması: Windows ANSI (cp1252) charmap kodlama uyuşmazlıkları RobustConsole ile yakalanarak "
+        "konsola basılan Türkçe karakter ve emojilerin Streamlit'i çökertmesi %100 engellenir.\n"
+        "- 5'li API Key Failover Havuzu: .env içerisindeki anahtarlar arasında kota (429) veya yoğunluk (503) anında kesintisiz rotasyon yapılır."
     )
 
-    # 6. BÖLÜM: META-DÜZLEM VE İKİNCİ BEYİN
-    pdf.add_section_title("6. META-DÜZLEM VE İKİNCİ BEYİN (SECOND BRAIN) MİMARİSİ")
+    # 5. BÖLÜM: SQLITE CRUD VE PORTFÖY
+    pdf.add_section_title("5. SQLITE VERİTABANI ŞEMASI VE TAM CRUD PORTFÖY YÖNETİMİ")
     pdf.add_paragraph(
-        "Şirketin kurumsal hafızası 'meta_bellek/' dizini altında Markdown dosyaları ve ADR (Mimari Karar Kayıtları) formatında saklanır. "
-        "Yönetici ile CEO arasındaki stratejik konuşmalar, alınan kararlar ve operasyonel direktifler kalıcı bilgi tabanına dönüştürülür. "
-        "Böylece şirket zaman geçtikçe unutmayan, kurumsal tecrübe biriktiren yaşayan bir holdinge evrilir."
+        "Tüm projeler 'studio_apps.db' SQLite veritabanında thread izolasyonunda tutulur. Sayfa yenilendiğinde projeler kaybolmaz:\n"
+        "- studio_projects Tablosu: thread_id (PK), display_name, custom_notes, tags, created_at, updated_at.\n"
+        "- checkpoints & writes Tabloları: LangGraph SqliteSaver durum kayıtları ve düğüm çıktıları.\n"
+        "- CREATE: Yeni proje oluşturma anında SQLite'a yazılır; seçimler sıfırlanmaz.\n"
+        "- READ: Portföy sekmesinde anlık arama (search_query) ve duruma göre filtreleme (Onay Bekliyor, Reddedildi, Kurulu vb.).\n"
+        "- UPDATE: Proje adı, etiket ve yönetici notlarının SQLite UPDATE ile kaydedilmesi.\n"
+        "- DELETE: İlgili projenin checkpoints, writes ve disk çıktılarının kalıcı olarak temizlenmesi.\n"
+        "- Time-Travel Audit: get_state_history ile projenin her bir geçmiş döngü anına adım adım denetim."
     )
 
-    # PDF Bytes Çıktısı
+    # 6. BÖLÜM: İKİNCİ BEYİN VE KEŞİF
+    pdf.add_section_title("6. İKİNCİ BEYİN (SECOND BRAIN) VE ÜRÜN-MİMARİ KONSEYİ")
+    pdf.add_paragraph(
+        "Kurumsal hafıza 'meta_bellek/' dizininde kalıcı Markdown ve ADR formatında saklanır:\n"
+        "- 01_sirket_vizyonu.md: Şirketin kurucu manifestosu ve temel mühendislik ilkeleri.\n"
+        "- 02_beyin_firtinasi_notlari/: Ürün fikirleri ve pazar keşif notları.\n"
+        "- 03_stratejik_kararlar/: Mimari Karar Kayıtları (Architecture Decision Records - ADR).\n"
+        "- 04_operasyonel_direktifler/: Üretilen doğrulanmış mühendislik şartnameleri.\n"
+        "- VaultRepository CRUD: Belgeleri tarayıcı üzerinden okuma, düzenleme ve silme imkânı.\n"
+        "- Konsey Köprüsü: CPO + CTO tartışmasını tek tıkla operasyonel şartnameye dönüştürerek doğrudan Yazılım Fabrikası'na aktarır."
+    )
+
     return bytes(pdf.output())
 
 
 if __name__ == "__main__":
     pdf_bytes = generate_enterprise_documentation_pdf()
-    with open("test_doku.pdf", "wb") as f:
+    with open("test_studio_whitepaper.pdf", "wb") as f:
         f.write(pdf_bytes)
-    print("PDF OK! Boyut:", len(pdf_bytes))
+    print("PDF OK! Boyut:", len(pdf_bytes), "bytes")

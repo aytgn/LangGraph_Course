@@ -3,7 +3,7 @@ Data Models and Typed Entities for Studio Operations.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict
 
 
 @dataclass
@@ -12,7 +12,7 @@ class AppProject:
     thread_id: str
     name: str = "(Henüz İsimlendirilmedi)"
     slug: str = ""
-    app_type: str = "Streamlit Web App"
+    app_type: str = "Henüz Belirlenmedi"
     status: str = "⚪ Başlangıç"
     tech_stack: List[str] = field(default_factory=list)
     total_loc: int = 0
@@ -21,12 +21,17 @@ class AppProject:
     revision_count: int = 0
     qa_passed: bool = False
     is_deployed: bool = False
+    is_rejected: bool = False
+    rejection_reason: Optional[str] = None
     app_folder: Optional[str] = None
     run_command_hint: Optional[str] = None
     purpose_summary: Optional[str] = None
     code_files: Dict[str, str] = field(default_factory=dict)
     qa_report: Optional[str] = None
-    created_at: Optional[str] = None
+    custom_notes: str = ""
+    tags: str = ""
+    created_at: str = ""
+    updated_at: str = ""
 
 
 @dataclass
